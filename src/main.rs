@@ -1,67 +1,78 @@
 mod vec3;
 mod ray;
-mod colour;
 mod camera;
 mod hittable;
 mod sphere;
 mod hittable_list;
-mod material;
+mod materials;
+mod hit_record;
+mod lambertian;
+mod metal;
+mod dielectric;
+mod colour;
 
 use std::sync::Arc;
 use std::time::Instant;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
+
 use ray_tracing::*;
-use crate::camera::Camera;
-use crate::colour::*;
-use crate::hittable::{HitRecord, Hittable};
-use crate::hittable_list::HittableList;
-use crate::vec3::Vec3;
-use crate::ray::Ray;
-use crate::sphere::Sphere;
-use crate::material::MaterialType::*;
+use colour::*;
+use vec3::Vec3;
+use ray::Ray;
+use camera::Camera;
+
+use hit_record::HitRecord;
+use hittable::{ Hittable, HittableTrait };
+use hittable_list::HittableList;
+use sphere::Sphere;
+
+use materials::{ MaterialTrait };
+use lambertian::Lambertian;
+use metal::Metal;
+use dielectric::Dielectric;
 
 fn random_scene() -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Arc::new(Lambertian(Vec3::new(0.5, 0.5, 0.5)));
-    world.add(Sphere::new(Vec3::new(0, -1000, 0), 1000.0, Arc::clone(&ground_material)));
+    let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
+    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000.0, Arc::clone(&ground_material)));
 
     for a in -11..=11 {
         for b in -11..=11 {
-            let choose_mat = random_double(0.0, 1.0);
+            let choose_mat = random_double();
             let centre = Vec3::new(
-                a as f64 + 0.9 * random_double(0.0, 1.0),
+                a as f64 + 0.9 * random_double(),
                 0.2,
-                b as f64 + 0.9 * random_double(0.0, 1.0)
+                b as f64 + 0.9 * random_double()
             );
 
-            if (centre - Vec3::new(4, 0.2, 0)).modulus() > 0.9 {
+            if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let albedo = Vec3::random(0.0, 1.0) * Vec3::random(0.0, 1.0);
-                    let sphere_material = Arc::new(Lambertian(albedo));
+                    let sphere_material = Arc::new(Lambertian::new(albedo));
                     world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
                 } else if choose_mat < 0.95 {
                     let albedo = Vec3::random(0.5, 1.0);
-                    let fuzz = random_double(0.0, 0.5);
-                    let sphere_material = Arc::new(Metal(albedo, fuzz));
+                    let fuzz = random_range(0.0, 0.5);
+                    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
                     world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
                 } else {
-                    let sphere_material = Arc::new(Dielectric(1.5));
+                    let sphere_material = Arc::new(Dielectric::new(1.5));
                     world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
                 }
             }
         }
     }
 
-    let material1 = Arc::new(Dielectric(1.5));
-    let material2 = Arc::new(Lambertian(Vec3::new(0.4, 0.2, 0.1)));
-    let material3 = Arc::new(Metal(Vec3::new(0.7, 0.6, 0.5), 0.0));
+    let material1 = Arc::new(Dielectric::new(1.5));
+    let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
+    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0));
 
-    world.add(Sphere::new(Vec3::new(0, 1, 0), 1.0, Arc::clone(&material1)));
-    world.add(Sphere::new(Vec3::new(-4, 1, 0), 1.0, Arc::clone(&material2)));
-    world.add(Sphere::new(Vec3::new(4, 1, 0), 1.0, Arc::clone(&material3)));
+    world.add(Sphere::new(Vec3::new(0., 1., 0.), 1.0, Arc::clone(&material1)));
+    world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1.0, Arc::clone(&material2)));
+    world.add(Sphere::new(Vec3::new(4., 1., 0.), 1.0, Arc::clone(&material3)));
 
     world
 }
@@ -70,16 +81,14 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     let mut hit_record = HitRecord::empty();
 
     if depth <= 0 {
-        return Vec3::new(0, 0, 0);
+        return Vec3::zero();
     }
 
     if world.hit(ray, 0.001, INFINITY, &mut hit_record) {
-        let mut scattered = Ray::empty();
-        let mut attenuation = Vec3::zero();
-        if hit_record.material.scatter(ray, &hit_record, &mut attenuation, &mut scattered) {
-            return attenuation * ray_colour(&scattered, world, depth - 1);
+        return match hit_record.material.scatter(ray, &hit_record) {
+            Some((attenuation, scattered)) => *attenuation * ray_colour(&scattered, world, depth - 1),
+            None => Vec3::zero()
         }
-        return Vec3::zero();
     }
 
     let unit_direction = ray.get_direction().unit();
@@ -91,18 +100,18 @@ fn main() {
 
     // Image
     const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: usize = 2400;
+    const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 1000;
+    const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
     // World
     let world = random_scene();
 
     // Camera
-    let look_from = Vec3::new(13, 2, 3);
-    let look_at = Vec3::new(0, 0, 0);
-    let up = Vec3::new(0, 1, 0);
+    let look_from = Vec3::new(13., 2., 3.);
+    let look_at = Vec3::new(0., 0., 0.);
+    let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.0;
     let aperture = 0.1;
 
@@ -127,8 +136,8 @@ fn main() {
         let y = IMAGE_HEIGHT - 1 - (i / IMAGE_WIDTH);
         let x = i % IMAGE_WIDTH;
         for _ in 0..SAMPLES_PER_PIXEL {
-            let u = (x as f64 + random_double(0.0, 1.0)) / (IMAGE_WIDTH - 1) as f64;
-            let v = (y as f64 + random_double(0.0, 1.0)) / (IMAGE_HEIGHT - 1) as f64;
+            let u = (x as f64 + random_double()) / (IMAGE_WIDTH - 1) as f64;
+            let v = (y as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
             let r = camera.get_ray(u, v);
             pixel_colour += ray_colour(&r, &world, MAX_DEPTH);
         }

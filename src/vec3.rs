@@ -1,8 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
-use ray_tracing::random_double;
+use ray_tracing::{ random_range };
 
-#[derive(Debug)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -11,34 +10,23 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn zero() -> Vec3 {
-        Vec3 { x: 0.0, y: 0.0, z: 0.0 }
+        Vec3 { x: 0., y: 0., z: 0. }
     }
 
     pub fn one() -> Vec3 {
-        Vec3 { x: 1.0, y: 1.0, z: 1.0 }
+        Vec3 { x: 1., y: 1., z: 1. }
     }
 
-    pub fn new<X,Y,Z> (x: X, y: Y, z: Z) -> Vec3
-    where
-        X: Into<f64>,
-        Y: Into<f64>,
-        Z: Into<f64>
-    {
-        Vec3 { x: x.into(), y: y.into(), z: z.into() }
+    pub fn new (x: f64, y: f64, z: f64) -> Vec3 {
+        Vec3 { x, y, z }
     }
 
     pub fn random(min: f64, max: f64) -> Vec3 {
         Vec3 {
-            x: random_double(min, max),
-            y: random_double(min, max),
-            z: random_double(min, max)
+            x: random_range(min, max),
+            y: random_range(min, max),
+            z: random_range(min, max)
         }
-    }
-
-    pub fn copy_vector(&mut self, vector: &Vec3) {
-        self.x = vector.x;
-        self.y = vector.y;
-        self.z = vector.z;
     }
 
     pub fn random_in_unit_sphere() -> Vec3 {
@@ -53,7 +41,7 @@ impl Vec3 {
 
     pub fn random_in_unit_disk() -> Vec3 {
         loop {
-            let p = Vec3::new(random_double(0.0, 1.0), random_double(0.0, 1.0), 0.0);
+            let p = Vec3::new(random_range(-1., 1.), random_range(-1., 1.), 0.0);
             if p.length_squared() >= 1.0 {
                 continue
             }
@@ -69,7 +57,7 @@ impl Vec3 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    pub fn modulus(&self) -> f64 {
+    pub fn length(&self) -> f64 {
         f64::sqrt(self.length_squared())
     }
 
@@ -98,7 +86,7 @@ impl Vec3 {
     }
 
     pub fn unit(self) -> Vec3 {
-        self / self.modulus()
+        self / self.length()
     }
 
     pub fn near_zero(&self) -> bool {

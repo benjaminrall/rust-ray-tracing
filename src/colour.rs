@@ -1,6 +1,6 @@
-use ray_tracing::clamp;
-use crate::Vec3;
 use image::Rgb;
+use ray_tracing::clamp;
+use crate::vec3::Vec3;
 
 pub fn get_colour(colour: &Vec3, samples_per_pixel: i32) -> Rgb<u8> {
     let scale = 1.0 / samples_per_pixel as f64;

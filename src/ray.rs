@@ -10,15 +10,6 @@ impl Ray {
         Ray { origin, direction }
     }
 
-    pub fn empty() -> Self {
-        Ray { origin: Vec3::zero(), direction: Vec3::zero() }
-    }
-
-    pub fn set(&mut self, origin: Vec3, direction: Vec3) {
-        self.origin = origin;
-        self.direction = direction;
-    }
-
     pub fn at(&self, t: f64) -> Vec3 {
         self.origin + t * self.direction
     }

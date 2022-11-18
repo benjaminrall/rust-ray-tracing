@@ -1,8 +1,9 @@
 use crate::{HitRecord, Hittable};
+use crate::hittable::HittableTrait;
 use crate::Ray;
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable + Sync>>
+    objects: Vec<Hittable>
 }
 
 impl HittableList {
@@ -10,12 +11,12 @@ impl HittableList {
         HittableList { objects: vec![] }
     }
 
-    pub fn add(&mut self, object: impl Hittable + Sync + 'static) {
-        self.objects.push(Box::new(object));
+    pub fn add(&mut self, object: Hittable) {
+        self.objects.push(object);
     }
 }
 
-impl Hittable for HittableList {
+impl HittableTrait for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
         let mut temp_record = HitRecord::empty();
         let mut hit_anything = false;
