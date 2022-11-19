@@ -10,11 +10,9 @@ mod hit_record;
 mod lambertian;
 mod metal;
 mod dielectric;
-mod colour;
 
 // Importing own crate's module behaviour
 use ray_tracing::*;
-use crate::colour::*;
 
 use crate::vec3::Vec3;
 use crate::ray::Ray;
