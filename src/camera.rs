@@ -1,4 +1,5 @@
 use ray_tracing::degrees_to_radians;
+use crate::ray::Ray;
 use crate::vec3::Vec3;
 
 pub struct Camera {

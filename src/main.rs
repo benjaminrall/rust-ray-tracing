@@ -36,12 +36,17 @@ use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
 
-fn random_scene() -> HittableList {
+
+/// Generates the final scene from 'Ray Tracing in a Weekend'
+fn in_a_weekend_scene() -> HittableList {
+    // Creates world list
     let mut world = HittableList::new();
 
+    // Sets up ground
     let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
     world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000.0, Arc::clone(&ground_material)));
 
+    // Generates random spheres
     for a in -11..=11 {
         for b in -11..=11 {
             let choose_mat = random_double();
@@ -50,7 +55,6 @@ fn random_scene() -> HittableList {
                 0.2,
                 b as f64 + 0.9 * random_double()
             );
-
             if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let albedo = Vec3::random(0.0, 1.0) * Vec3::random(0.0, 1.0);
@@ -69,10 +73,10 @@ fn random_scene() -> HittableList {
         }
     }
 
+    // Adds three main spheres
     let material1 = Arc::new(Dielectric::new(1.5));
     let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
     let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0));
-
     world.add(Sphere::new(Vec3::new(0., 1., 0.), 1.0, Arc::clone(&material1)));
     world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1.0, Arc::clone(&material2)));
     world.add(Sphere::new(Vec3::new(4., 1., 0.), 1.0, Arc::clone(&material3)));
@@ -80,62 +84,74 @@ fn random_scene() -> HittableList {
     world
 }
 
+/// Gets the colour of a given ray in the world
 fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
+    // Stops recursion once past the max depth
     if depth <= 0 {
         return Vec3::zero();
     }
 
+    // Checks if the ray hit anything in the world
     if let Some(hit_record) = world.hit(ray, 0.001, INFINITY) {
+        // If the ray hit anything, return the result of the scattered ray against the
+        // hit's material
         return match hit_record.material.scatter(ray, &hit_record) {
-            Some((attenuation, scattered)) => *attenuation * ray_colour(&scattered, world, depth - 1),
+            Some((attenuation, scattered)) =>
+                *attenuation * ray_colour(&scattered, world, depth - 1),
             None => Vec3::zero()
         }
     }
 
+    // If nothing was hit, return the sky gradient for that point
     let unit_direction = ray.get_direction().unit();
     let t = 0.5 * (unit_direction.y + 1.0);
     (1.0 - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
-
-    // Image
+    // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 3.0 / 2.0;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
-    // World
-    let world = random_scene();
+    // ---- WORLD SETUP ----
+    let world = in_a_weekend_scene();
 
-    // Camera
+    // ---- CAMERA SETUP ----
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
 
     let camera = Camera::new(
         look_from, look_at, up, 20.0, aperture, dist_to_focus, ASPECT_RATIO, 2.0
     );
 
-    // Render
+    // ---- RENDERING THE SCENE ----
     let start = Instant::now();
 
+    // Set up progress bar
     let progress_bar_style = ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta})")
         .unwrap()
         .progress_chars("#>-");
-
     let render_progress_bar = ProgressBar::new((IMAGE_WIDTH * IMAGE_HEIGHT) as u64);
     render_progress_bar.set_style(progress_bar_style.clone());
 
+    // Create pixels array to store an RGB value for each pixel in the image
     let mut pixels = vec![Rgb([0 as u8, 0 as u8, 0 as u8]); IMAGE_HEIGHT * IMAGE_WIDTH];
 
+    // Loop through each pixel and calculate their colour in parallel
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
         let mut pixel_colour = Vec3::zero();
+
+        // Get pixel's x and y position from index
         let y = IMAGE_HEIGHT - 1 - (i / IMAGE_WIDTH);
         let x = i % IMAGE_WIDTH;
+
+        // Calculate the colour at each sample
         for _ in 0..SAMPLES_PER_PIXEL {
             let u = (x as f64 + random_double()) / (IMAGE_WIDTH - 1) as f64;
             let v = (y as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
@@ -143,27 +159,38 @@ fn main() {
             pixel_colour += ray_colour(&r, &world, MAX_DEPTH);
         }
 
-        *pixel = get_colour(&pixel_colour, SAMPLES_PER_PIXEL);
+        // Averages pixel colour over all samples
+        pixel_colour /= SAMPLES_PER_PIXEL as f64;
+
+        // Saves the gamma corrected colour value in the range [0,255] to the pixel array
+        *pixel = Rgb([
+            (256.0 * clamp(f64::sqrt(colour.x), 0.0, 0.999)) as u8,
+            (256.0 * clamp(f64::sqrt(colour.y), 0.0, 0.999)) as u8,
+            (256.0 * clamp(f64::sqrt(colour.z), 0.0, 0.999)) as u8,
+        ]);
+
+        // Increment progress bar
         render_progress_bar.inc(1);
     });
-    render_progress_bar.set_position((IMAGE_HEIGHT * IMAGE_WIDTH) as u64);
 
-    // Drawing
+    // ---- SAVING THE SCENE TO IMAGE ----
     let draw_progress_bar = ProgressBar::new((IMAGE_WIDTH * IMAGE_HEIGHT) as u64);
     draw_progress_bar.set_style(progress_bar_style);
 
+    // Loop through each pixel in a new image buffer, and set it to its colour from the pixel array
     let mut buffer = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
     for (x, y, pixel) in buffer.enumerate_pixels_mut() {
         *pixel = pixels[(y * IMAGE_WIDTH as u32 + x) as usize];
         draw_progress_bar.inc(1);
     }
-    draw_progress_bar.set_position((IMAGE_HEIGHT * IMAGE_WIDTH) as u64);
 
+    // Attempt to save to 'image.png' file
     match buffer.save("image.png") {
         Err(e) => eprintln!("Error writing to file: {}", e),
-        Ok(()) => eprintln!("File written to successfully.")
+        Ok(()) => eprintln!("Image saved successfully.")
     }
 
+    // Output program's duration
     let duration = start.elapsed();
     eprintln!("Finished in {:?}.", duration);
 }
