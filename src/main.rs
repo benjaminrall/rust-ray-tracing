@@ -162,9 +162,9 @@ fn main() {
 
         // Saves the gamma corrected colour value in the range [0,255] to the pixel array
         *pixel = Rgb([
-            (256.0 * clamp(f64::sqrt(colour.x), 0.0, 0.999)) as u8,
-            (256.0 * clamp(f64::sqrt(colour.y), 0.0, 0.999)) as u8,
-            (256.0 * clamp(f64::sqrt(colour.z), 0.0, 0.999)) as u8,
+            (256.0 * clamp(f64::sqrt(pixel_colour.x), 0.0, 0.999)) as u8,
+            (256.0 * clamp(f64::sqrt(pixel_colour.y), 0.0, 0.999)) as u8,
+            (256.0 * clamp(f64::sqrt(pixel_colour.z), 0.0, 0.999)) as u8,
         ]);
 
         // Increment progress bar
