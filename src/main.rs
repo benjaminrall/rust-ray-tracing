@@ -29,11 +29,9 @@ use crate::dielectric::Dielectric;
 
 // Importing other crates
 use std::sync::Arc;
-use std::time::Instant;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
-
 
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
@@ -130,10 +128,7 @@ fn main() {
 
     // ---- RENDERING THE SCENE ----
 
-    // Records start of the rendering process
-    let start = Instant::now();
-
-    // Set up progress bar
+    // Sets up progress bar
     let progress_bar_style = ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({eta})")
         .unwrap()
         .progress_chars("#>-");
@@ -173,11 +168,9 @@ fn main() {
         render_progress_bar.inc(1);
     });
 
-    // Output rendering duration
-    let duration = start.elapsed();
-    eprintln!("Finished in {:?}.", duration);
-
     // ---- SAVING THE SCENE TO IMAGE ----
+
+    // Sets up progress bar
     let draw_progress_bar = ProgressBar::new((IMAGE_WIDTH * IMAGE_HEIGHT) as u64);
     draw_progress_bar.set_style(progress_bar_style);
 
