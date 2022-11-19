@@ -1,4 +1,4 @@
-use ray_tracing::{random_double, reflectance};
+use ray_tracing::random_double;
 use crate::hit_record::HitRecord;
 use crate::materials::{Material, MaterialTrait};
 use crate::ray::Ray;
@@ -12,6 +12,13 @@ pub struct Dielectric {
 impl Dielectric {
     pub fn new(refraction_index: f64) -> Material {
         Material::Dielectric(Dielectric { albedo: Vec3::one(), refraction_index })
+    }
+
+    /// Uses Schlick's approximation for calculating reflectance of a dielectric material
+    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let r0 = r0 * r0;
+        r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
     }
 }
 
