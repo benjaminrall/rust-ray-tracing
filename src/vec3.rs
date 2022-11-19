@@ -97,14 +97,15 @@ impl Vec3 {
     }
 }
 
+/// Allows vectors to be cloned directly by constructing a vector with the same x, y, and z
 impl Clone for Vec3 {
     fn clone(&self) -> Self {
         Vec3::new(self.x, self.y, self.z)
     }
 }
-
 impl Copy for Vec3 { }
 
+/// Implements vector addition
 impl Add for Vec3 {
     type Output = Self;
 
@@ -117,6 +118,7 @@ impl Add for Vec3 {
     }
 }
 
+/// Implements vector addition with the += operator
 impl AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
@@ -125,6 +127,7 @@ impl AddAssign for Vec3 {
     }
 }
 
+/// Implements negation of vectors using the unary '-'
 impl Neg for Vec3 {
     type Output = Self;
 
@@ -133,6 +136,7 @@ impl Neg for Vec3 {
     }
 }
 
+/// Implements vector subtraction
 impl Sub for Vec3 {
     type Output = Self;
 
@@ -141,12 +145,14 @@ impl Sub for Vec3 {
     }
 }
 
+/// Implements vector subtraction with the -= operator
 impl SubAssign for Vec3 {
     fn sub_assign(&mut self, rhs: Self) {
         *self += -rhs
     }
 }
 
+/// Implements element-wise multiplication of two vectors
 impl Mul for Vec3 {
     type Output = Self;
 
@@ -159,6 +165,7 @@ impl Mul for Vec3 {
     }
 }
 
+/// Implements multiplication of a vector with a scalar value
 impl Mul<f64> for Vec3 {
     type Output = Self;
 
@@ -171,6 +178,7 @@ impl Mul<f64> for Vec3 {
     }
 }
 
+/// Implements multiplication of a scalar value with a vector
 impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
@@ -179,6 +187,7 @@ impl Mul<Vec3> for f64 {
     }
 }
 
+/// Implements multiplication of a vector by a scalar value with the *= operator
 impl MulAssign<f64> for Vec3 {
     fn mul_assign(&mut self, rhs: f64) {
         self.x *= rhs;
@@ -187,6 +196,7 @@ impl MulAssign<f64> for Vec3 {
     }
 }
 
+/// Implements division of a vector by a scalar value
 impl Div<f64> for Vec3 {
     type Output = Vec3;
 
@@ -195,12 +205,14 @@ impl Div<f64> for Vec3 {
     }
 }
 
+/// Implements division of a vector by a scalar value with the /= operator
 impl DivAssign<f64> for Vec3 {
     fn div_assign(&mut self, rhs: f64) {
         *self *= 1.0 / rhs;
     }
 }
 
+/// Provides vector formatting and printing
 impl Display for Vec3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.x, self.y, self.z)
