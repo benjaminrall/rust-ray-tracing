@@ -6,7 +6,7 @@ use crate::vec3::Vec3;
 
 /// Object to represent Dielectric materials such as water and glass
 pub struct Dielectric {
-    albedo: Vec3,           // Albedo of the dielectric
+    albedo: Vec3,           // Albedo of the material
     refraction_index: f64   // Refraction index of the material
 }
 
@@ -25,7 +25,6 @@ impl Dielectric {
 }
 
 impl MaterialTrait for Dielectric {
-    /// Calculates scattered ray and colour for a given hit with a dielectric object
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
         // Calculates refraction ratio depending on if the front face of the object was hit
         let refraction_ratio = if hit_record.front_face {

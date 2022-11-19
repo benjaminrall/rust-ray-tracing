@@ -3,11 +3,13 @@ use crate::materials::{Material, MaterialTrait};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+/// Object to represent Lambertian diffuse materials
 pub struct Lambertian {
-    albedo: Vec3
+    albedo: Vec3    // Albedo of the material
 }
 
 impl Lambertian {
+    /// Constructs a new Lambertian object, wrapped in the Material enum
     pub fn new(albedo: Vec3) -> Material {
         Material::Lambertian(Lambertian { albedo })
     }
