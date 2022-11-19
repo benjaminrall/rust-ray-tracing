@@ -17,12 +17,15 @@ impl Lambertian {
 
 impl MaterialTrait for Lambertian {
     fn scatter(&self, _: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
+        // Gets the direction of the scattered ray, which bounces randomly away from the object
         let mut scatter_direction = hit_record.normal + Vec3::random_unit_vector();
 
+        // Ignores scatter directions near zero to avoid impossible rays
         if scatter_direction.near_zero() {
             scatter_direction = hit_record.normal;
         };
 
+        // Constructs scattered ray
         let scattered = Ray::new(hit_record.point, scatter_direction);
 
         Some((&self.albedo, scattered))

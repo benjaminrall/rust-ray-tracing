@@ -40,10 +40,10 @@ impl MaterialTrait for Dielectric {
 
         // Determines if a ray should be reflected or refracted, and gets the resulting direction
         let direction;
-        if refraction_ratio * sin_theta > 1.0 || reflectance(cos_theta, refraction_ratio) > random_double() {
-            direction = Vec3::reflect(unit_direction, hit_record.normal);
+        if refraction_ratio * sin_theta > 1.0 || Dielectric::reflectance(cos_theta, refraction_ratio) > random_double() {
+            direction = Ray::reflect(unit_direction, hit_record.normal);
         } else {
-            direction = Vec3::refract(unit_direction, hit_record.normal, refraction_ratio);
+            direction = Ray::refract(unit_direction, hit_record.normal, refraction_ratio);
         }
 
         // Constructs the scattered ray

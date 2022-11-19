@@ -122,7 +122,7 @@ fn main() {
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.0;
-    let aperture = 0.0;
+    let aperture = 0.1;
 
     let camera = Camera::new(
         look_from, look_at, up, 20.0, aperture, dist_to_focus, ASPECT_RATIO, 2.0

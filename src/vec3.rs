@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
 use ray_tracing::{ random_range };
 
+/// Object to represent a column vector in 3 dimensions
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -9,18 +10,22 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
+    /// Returns a zero vector
     pub fn zero() -> Vec3 {
         Vec3 { x: 0., y: 0., z: 0. }
     }
 
+    /// Returns a vector with x, y, and z of 1
     pub fn one() -> Vec3 {
         Vec3 { x: 1., y: 1., z: 1. }
     }
 
+    /// Constructs a new vector with given x, y, and z values
     pub fn new (x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 { x, y, z }
     }
 
+    /// Constructs a vector with random components between a given range
     pub fn random(min: f64, max: f64) -> Vec3 {
         Vec3 {
             x: random_range(min, max),
@@ -29,42 +34,49 @@ impl Vec3 {
         }
     }
 
+    /// Returns a random vector in a unit sphere
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
-            let p = Vec3::random(-1.0, 1.0);
-            if p.length_squared() >= 1.0 {
+            let p = Vec3::random(-1., 1.);
+            if p.length_squared() >= 1. {
                 continue;
             }
             return p;
         }
     }
 
+    /// Returns a random vector in a unit disk
     pub fn random_in_unit_disk() -> Vec3 {
         loop {
-            let p = Vec3::new(random_range(-1., 1.), random_range(-1., 1.), 0.0);
-            if p.length_squared() >= 1.0 {
+            let p = Vec3::new(random_range(-1., 1.), random_range(-1., 1.), 0.);
+            if p.length_squared() >= 1. {
                 continue
             }
             return p;
         }
     }
 
+    /// Returns a random unit vector
     pub fn random_unit_vector() -> Vec3 {
         Vec3::random_in_unit_sphere().unit()
     }
 
+    /// Returns the squared length of a vector
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    /// Returns the length of a vector
     pub fn length(&self) -> f64 {
         f64::sqrt(self.length_squared())
     }
 
+    /// Returns the dot product of two vectors
     pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
         u.x * v.x + u.y * v.y + u.z * v.z
     }
 
+    /// Returns the cross product of two vectors
     pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
         Vec3::new(
             u.y * v.z - u.z * v.y,
@@ -73,22 +85,12 @@ impl Vec3 {
         )
     }
 
-    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-        v - 2.0 * Vec3::dot(&v, &n) * n
-    }
-
-    pub fn refract(uv: Vec3, n: Vec3, eta: f64) -> Vec3 {
-        let cos_theta = f64::min(Vec3::dot(&-uv, &n), 1.0);
-        let r_out_perpendicular = eta * (uv + cos_theta * n);
-        let r_out_parallel = -f64::sqrt(f64::abs(
-            1.0 - r_out_perpendicular.length_squared())) * n;
-        r_out_perpendicular + r_out_parallel
-    }
-
+    /// Returns the unit vector
     pub fn unit(self) -> Vec3 {
         self / self.length()
     }
 
+    /// Returns true if all components of the vector are near zero
     pub fn near_zero(&self) -> bool {
         let s = 1e-8;
         f64::abs(self.x) < s && f64::abs(self.y) < s && f64::abs(self.z) < s

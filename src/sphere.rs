@@ -5,13 +5,15 @@ use crate::materials::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+/// Object to store a Sphere object
 pub struct Sphere {
-    centre: Vec3,
-    radius: f64,
-    material: Arc<Material>,
+    centre: Vec3,               // Position of the centre of the sphere
+    radius: f64,                // Radius of the sphere
+    material: Arc<Material>,    // Material of the sphere
 }
 
 impl Sphere {
+    /// Constructs a new Sphere object, wrapped in the Hittable enum
     pub fn new(centre: Vec3, radius: f64, material: Arc<Material>) -> Hittable {
         Hittable::Sphere(Sphere { centre, radius, material })
     }
@@ -19,17 +21,23 @@ impl Sphere {
 
 impl HittableTrait for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        // Calculates vector of the ray's origin to the centre of the sphere
         let oc = ray.get_origin() - self.centre;
+
+        // Calculates elements of quadratic equation to solve for the points of intersection
         let a = ray.get_direction().length_squared();
         let half_b = Vec3::dot(&oc, &ray.get_direction());
         let c  = oc.length_squared() - self.radius * self.radius;
 
+        // Calculates the discriminant of the equation and uses it to detect no intersections
         let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
             return None;
         }
+
         let sqrt_d = f64::sqrt(discriminant);
 
+        // Finds the smallest root within the range [t_min,t_max] or returns None if none exist
         let mut root = (-half_b - sqrt_d) / a;
         if root < t_min || t_max < root {
             root = (-half_b + sqrt_d) / a;
@@ -38,6 +46,7 @@ impl HittableTrait for Sphere {
             }
         }
 
+        // Creates a new hit record for the interaction and returns it
         let mut hit_record = HitRecord::new(ray.at(root), &self.material, root);
         let outward_normal = (hit_record.point - self.centre) / self.radius;
         hit_record.calculate_face_normal(ray, outward_normal);
