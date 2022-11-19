@@ -1,9 +1,9 @@
 use crate::hit_record::HitRecord;
+use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::Ray;
 
 pub trait HittableTrait {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
 pub enum Hittable {
@@ -11,9 +11,9 @@ pub enum Hittable {
 }
 
 impl HittableTrait for Hittable {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self {
-            Hittable::Sphere(obj) => obj.hit(ray, t_min, t_max, hit_record)
+            Hittable::Sphere(obj) => obj.hit(ray, t_min, t_max)
         }
     }
 }

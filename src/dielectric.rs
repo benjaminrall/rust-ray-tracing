@@ -1,5 +1,4 @@
-use ray_tracing::random_double;
-use ray_tracing::reflectance;
+use ray_tracing::{random_double, reflectance};
 use crate::hit_record::HitRecord;
 use crate::materials::{Material, MaterialTrait};
 use crate::ray::Ray;

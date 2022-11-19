@@ -1,3 +1,4 @@
+// Internal module declaration
 mod vec3;
 mod ray;
 mod camera;
@@ -11,27 +12,29 @@ mod metal;
 mod dielectric;
 mod colour;
 
+// Importing own crate's module behaviour
+use ray_tracing::*;
+use crate::colour::*;
+
+use crate::vec3::Vec3;
+use crate::ray::Ray;
+use crate::camera::Camera;
+
+use crate::hittable::HittableTrait;
+use crate::hittable_list::HittableList;
+use crate::sphere::Sphere;
+
+use crate::materials::MaterialTrait;
+use crate::lambertian::Lambertian;
+use crate::metal::Metal;
+use crate::dielectric::Dielectric;
+
+// Importing other crates
 use std::sync::Arc;
 use std::time::Instant;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
-
-use ray_tracing::*;
-use colour::*;
-use vec3::Vec3;
-use ray::Ray;
-use camera::Camera;
-
-use hit_record::HitRecord;
-use hittable::{ Hittable, HittableTrait };
-use hittable_list::HittableList;
-use sphere::Sphere;
-
-use materials::{ MaterialTrait };
-use lambertian::Lambertian;
-use metal::Metal;
-use dielectric::Dielectric;
 
 fn random_scene() -> HittableList {
     let mut world = HittableList::new();
@@ -78,13 +81,11 @@ fn random_scene() -> HittableList {
 }
 
 fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
-    let mut hit_record = HitRecord::empty();
-
     if depth <= 0 {
         return Vec3::zero();
     }
 
-    if world.hit(ray, 0.001, INFINITY, &mut hit_record) {
+    if let Some(hit_record) = world.hit(ray, 0.001, INFINITY) {
         return match hit_record.material.scatter(ray, &hit_record) {
             Some((attenuation, scattered)) => *attenuation * ray_colour(&scattered, world, depth - 1),
             None => Vec3::zero()

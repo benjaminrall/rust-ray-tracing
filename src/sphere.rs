@@ -1,10 +1,9 @@
 use std::sync::Arc;
-use crate::vec3::Vec3;
-use crate::ray::Ray;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, HittableTrait};
 use crate::materials::Material;
-
+use crate::ray::Ray;
+use crate::vec3::Vec3;
 
 pub struct Sphere {
     centre: Vec3,
@@ -19,7 +18,7 @@ impl Sphere {
 }
 
 impl HittableTrait for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.get_origin() - self.centre;
         let a = ray.get_direction().length_squared();
         let half_b = Vec3::dot(&oc, &ray.get_direction());
@@ -27,7 +26,7 @@ impl HittableTrait for Sphere {
 
         let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
-            return false;
+            return None;
         }
         let sqrt_d = f64::sqrt(discriminant);
 
@@ -35,16 +34,14 @@ impl HittableTrait for Sphere {
         if root < t_min || t_max < root {
             root = (-half_b + sqrt_d) / a;
             if root < t_min || t_max < root {
-                return false;
+                return None;
             }
         }
 
-        hit_record.t = root;
-        hit_record.point = ray.at(root);
+        let mut hit_record = HitRecord::new(ray.at(root), &self.material, root);
         let outward_normal = (hit_record.point - self.centre) / self.radius;
         hit_record.set_face_normal(ray, outward_normal);
-        hit_record.set_material(&self.material);
 
-        true
+        Some(hit_record)
     }
 }
