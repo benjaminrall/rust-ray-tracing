@@ -6,8 +6,8 @@ use crate::vec3::Vec3;
 
 /// Object to represent Dielectric materials such as water and glass
 pub struct Dielectric {
-    albedo: Vec3,
-    refraction_index: f64
+    albedo: Vec3,           // Albedo of the dielectric
+    refraction_index: f64   // Refraction index of the material
 }
 
 impl Dielectric {

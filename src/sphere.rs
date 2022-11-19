@@ -40,7 +40,7 @@ impl HittableTrait for Sphere {
 
         let mut hit_record = HitRecord::new(ray.at(root), &self.material, root);
         let outward_normal = (hit_record.point - self.centre) / self.radius;
-        hit_record.set_face_normal(ray, outward_normal);
+        hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)
     }
