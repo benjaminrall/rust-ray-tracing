@@ -129,6 +129,8 @@ fn main() {
     );
 
     // ---- RENDERING THE SCENE ----
+
+    // Records start of the rendering process
     let start = Instant::now();
 
     // Set up progress bar
@@ -171,6 +173,10 @@ fn main() {
         render_progress_bar.inc(1);
     });
 
+    // Output rendering duration
+    let duration = start.elapsed();
+    eprintln!("Finished in {:?}.", duration);
+
     // ---- SAVING THE SCENE TO IMAGE ----
     let draw_progress_bar = ProgressBar::new((IMAGE_WIDTH * IMAGE_HEIGHT) as u64);
     draw_progress_bar.set_style(progress_bar_style);
@@ -187,8 +193,4 @@ fn main() {
         Err(e) => eprintln!("Error writing to file: {}", e),
         Ok(()) => eprintln!("Image saved successfully.")
     }
-
-    // Output program's duration
-    let duration = start.elapsed();
-    eprintln!("Finished in {:?}.", duration);
 }
