@@ -36,6 +36,7 @@ use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
 
+#[warn(dead_code)]
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
     // Creates world list
@@ -43,7 +44,7 @@ fn in_a_weekend_scene() -> HittableList {
 
     // Sets up ground
     let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
-    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000.0, Arc::clone(&ground_material)));
+    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000., Arc::clone(&ground_material)));
 
     // Generates random spheres
     for a in -11..=11 {
@@ -56,11 +57,11 @@ fn in_a_weekend_scene() -> HittableList {
             );
             if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let albedo = Vec3::random(0.0, 1.0) * Vec3::random(0.0, 1.0);
+                    let albedo = Vec3::random(0., 1.) * Vec3::random(0., 1.);
                     let sphere_material = Arc::new(Lambertian::new(albedo));
                     world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
                 } else if choose_mat < 0.95 {
-                    let albedo = Vec3::random(0.5, 1.0);
+                    let albedo = Vec3::random(0.5, 1.);
                     let fuzz = random_range(0.0, 0.5);
                     let sphere_material = Arc::new(Metal::new(albedo, fuzz));
                     world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
@@ -75,10 +76,10 @@ fn in_a_weekend_scene() -> HittableList {
     // Adds three main spheres
     let material1 = Arc::new(Dielectric::new(1.5));
     let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
-    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Sphere::new(Vec3::new(0., 1., 0.), 1.0, Arc::clone(&material1)));
-    world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1.0, Arc::clone(&material2)));
-    world.add(Sphere::new(Vec3::new(4., 1., 0.), 1.0, Arc::clone(&material3)));
+    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.));
+    world.add(Sphere::new(Vec3::new(0., 1., 0.), 1., Arc::clone(&material1)));
+    world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1., Arc::clone(&material2)));
+    world.add(Sphere::new(Vec3::new(4., 1., 0.), 1., Arc::clone(&material3)));
 
     world
 }
@@ -89,7 +90,7 @@ fn in_a_weekend_camera() -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
-    let dist_to_focus = 10.0;
+    let dist_to_focus = 10.;
     let aperture = 0.1;
 
     Camera::new(
@@ -117,13 +118,13 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
 
     // If nothing was hit, return the sky gradient for that point
     let unit_direction = ray.direction.unit();
-    let t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.0)
+    let t = 0.5 * (unit_direction.y + 1.);
+    (1. - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.)
 }
 
 fn main() {
     // ---- IMAGE SETUP ----
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const ASPECT_RATIO: f64 = 16. / 9.;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL: i32 = 100;
@@ -136,7 +137,7 @@ fn main() {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
-    let dist_to_focus = 10.0;
+    let dist_to_focus = 10.;
     let aperture = 0.1;
 
     let camera = Camera::new(
@@ -176,9 +177,9 @@ fn main() {
 
         // Saves the gamma corrected colour value in the range [0,255] to the pixel array
         *pixel = Rgb([
-            (256.0 * clamp(f64::sqrt(pixel_colour.x), 0.0, 0.999)) as u8,
-            (256.0 * clamp(f64::sqrt(pixel_colour.y), 0.0, 0.999)) as u8,
-            (256.0 * clamp(f64::sqrt(pixel_colour.z), 0.0, 0.999)) as u8,
+            (256. * clamp(f64::sqrt(pixel_colour.x), 0., 0.999)) as u8,
+            (256. * clamp(f64::sqrt(pixel_colour.y), 0., 0.999)) as u8,
+            (256. * clamp(f64::sqrt(pixel_colour.z), 0., 0.999)) as u8,
         ]);
 
         // Increment progress bar

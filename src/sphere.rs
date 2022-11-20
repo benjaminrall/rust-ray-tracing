@@ -31,7 +31,7 @@ impl HittableTrait for Sphere {
 
         // Calculates the discriminant of the equation and uses it to detect no intersections
         let discriminant = half_b * half_b - a * c;
-        if discriminant < 0.0 {
+        if discriminant < 0. {
             return None;
         }
 

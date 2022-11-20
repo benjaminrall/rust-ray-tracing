@@ -25,7 +25,7 @@ impl MaterialTrait for Metal {
         );
 
         // Excludes the ray if it's reflected towards the object
-        if Vec3::dot(&scattered.direction, &hit_record.normal) > 0.0 {
+        if Vec3::dot(&scattered.direction, &hit_record.normal) > 0. {
             Some((&self.albedo, scattered))
         } else {
             None

@@ -20,15 +20,15 @@ impl Ray {
 
     /// Returns the direction of a reflected ray through a normal vector
     pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-        v - 2.0 * Vec3::dot(&v, &n) * n
+        v - 2. * Vec3::dot(&v, &n) * n
     }
 
     /// Returns the direction of a refracted ray
     pub fn refract(uv: Vec3, n: Vec3, refractive_index_ratio: f64) -> Vec3 {
-        let cos_theta = f64::min(Vec3::dot(&-uv, &n), 1.0);
+        let cos_theta = f64::min(Vec3::dot(&-uv, &n), 1.);
         let r_out_perpendicular = refractive_index_ratio * (uv + cos_theta * n);
         let r_out_parallel = -f64::sqrt(f64::abs(
-            1.0 - r_out_perpendicular.length_squared())) * n;
+            1. - r_out_perpendicular.length_squared())) * n;
         r_out_perpendicular + r_out_parallel
     }
 }

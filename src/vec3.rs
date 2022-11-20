@@ -201,14 +201,14 @@ impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     fn div(self, rhs: f64) -> Self::Output {
-        (1.0 / rhs) * self
+        (1. / rhs) * self
     }
 }
 
 /// Implements division of a vector by a scalar value with the /= operator
 impl DivAssign<f64> for Vec3 {
     fn div_assign(&mut self, rhs: f64) {
-        *self *= 1.0 / rhs;
+        *self *= 1. / rhs;
     }
 }
 

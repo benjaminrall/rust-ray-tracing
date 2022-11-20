@@ -18,9 +18,9 @@ impl Dielectric {
 
     /// Uses Schlick's approximation for calculating reflectance of a dielectric material
     fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
-        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let r0 = (1. - ref_idx) / (1. + ref_idx);
         let r0 = r0 * r0;
-        r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
+        r0 + (1. - r0) * f64::powi(1. - cosine, 5)
     }
 }
 
@@ -28,19 +28,19 @@ impl MaterialTrait for Dielectric {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
         // Calculates refraction ratio depending on if the front face of the object was hit
         let refraction_ratio = if hit_record.front_face {
-            1.0 / self.refraction_index
+            1. / self.refraction_index
         } else {
             self.refraction_index
         };
 
         // Calculates unit direction of the ray in and appropriate trig values
         let unit_direction = ray_in.direction.unit();
-        let cos_theta = f64::min(Vec3::dot(&-unit_direction, &hit_record.normal), 1.0);
-        let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
+        let cos_theta = f64::min(Vec3::dot(&-unit_direction, &hit_record.normal), 1.);
+        let sin_theta = f64::sqrt(1. - cos_theta * cos_theta);
 
         // Determines if a ray should be reflected or refracted, and gets the resulting direction
         let direction;
-        if refraction_ratio * sin_theta > 1.0 || Dielectric::reflectance(cos_theta, refraction_ratio) > random_double() {
+        if refraction_ratio * sin_theta > 1. || Dielectric::reflectance(cos_theta, refraction_ratio) > random_double() {
             direction = Ray::reflect(unit_direction, hit_record.normal);
         } else {
             direction = Ray::refract(unit_direction, hit_record.normal, refraction_ratio);

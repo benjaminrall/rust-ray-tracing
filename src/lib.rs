@@ -3,7 +3,7 @@ pub const PI: f64 = std::f64::consts::PI;   // Storing value for PI
 
 /// Converts a given value in degrees to radians
 pub fn degrees_to_radians(degrees: f64) -> f64 {
-    degrees * PI / 180.0
+    degrees * PI / 180.
 }
 
 /// Generates a random double between 0 and 1

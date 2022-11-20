@@ -31,7 +31,7 @@ impl Camera {
     ) -> Self {
         // Calculates viewport width and height given a field of view angle in degrees
         let theta = degrees_to_radians(vertical_fov);
-        let h = f64::tan(theta / 2.0);
+        let h = f64::tan(theta / 2.);
         let viewport_height = viewport_height * h;
         let viewport_width = aspect_ratio * viewport_height;
 
@@ -44,12 +44,12 @@ impl Camera {
         // horizontal and vertical component of each pixel
         let horizontal = focus_dist * viewport_width * u;
         let vertical = focus_dist * viewport_height * v;
-        let lower_left_corner = look_from - horizontal / 2.0 - vertical / 2.0 - focus_dist * w;
+        let lower_left_corner = look_from - horizontal / 2. - vertical / 2. - focus_dist * w;
 
         // Returns fully constructed Camera
         Camera {
             origin: look_from, lower_left_corner, horizontal,
-            vertical, u, v, lens_radius: aperture / 2.0, min_time, max_time
+            vertical, u, v, lens_radius: aperture / 2., min_time, max_time
         }
     }
 
