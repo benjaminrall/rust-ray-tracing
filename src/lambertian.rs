@@ -16,7 +16,7 @@ impl Lambertian {
 }
 
 impl MaterialTrait for Lambertian {
-    fn scatter(&self, _: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
         // Gets the direction of the scattered ray, which bounces randomly away from the object
         let mut scatter_direction = hit_record.normal + Vec3::random_unit_vector();
 
@@ -26,7 +26,7 @@ impl MaterialTrait for Lambertian {
         };
 
         // Constructs scattered ray
-        let scattered = Ray::new(hit_record.point, scatter_direction);
+        let scattered = Ray::new(hit_record.point, scatter_direction, ray_in.time);
 
         Some((&self.albedo, scattered))
     }

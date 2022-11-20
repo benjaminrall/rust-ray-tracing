@@ -2,29 +2,20 @@ use crate::vec3::Vec3;
 
 /// Object to store information about a 3D line ray
 pub struct Ray {
-    origin: Vec3,   // Origin of the ray
-    direction: Vec3 // Direction of the ray
+    pub origin: Vec3,       // Origin of the ray
+    pub direction: Vec3,    // Direction of the ray
+    pub time: f64           // Time the ray exists at
 }
 
 impl Ray {
-    /// Constructs a new ray with a given origin and direction
-    pub fn new(origin: Vec3, direction: Vec3) -> Self {
-        Ray { origin, direction }
+    /// Constructs a new ray with a given origin, direction and time
+    pub fn new(origin: Vec3, direction: Vec3, time: f64) -> Self {
+        Ray { origin, direction, time }
     }
 
     /// Gets the point on the ray at a given time 't'
     pub fn at(&self, t: f64) -> Vec3 {
         self.origin + t * self.direction
-    }
-
-    /// Returns the ray's origin
-    pub fn get_origin(&self) -> Vec3 {
-        self.origin
-    }
-
-    /// Returns the ray's direction
-    pub fn get_direction(&self) -> Vec3 {
-        self.direction
     }
 
     /// Returns the direction of a reflected ray through a normal vector

@@ -5,24 +5,35 @@ use crate::materials::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-/// Object to store a Sphere object
-pub struct Sphere {
-    centre: Vec3,               // Position of the centre of the sphere
+/// Object to store a Moving Sphere object
+pub struct MovingSphere {
+    centre0: Vec3,              // Position of the centre of the sphere at time0
+    centre1: Vec3,              // Position of the centre of the sphere at time1
+    time0: f64,                 // Time of first position
+    time1: f64,                 // Time of second position
     radius: f64,                // Radius of the sphere
     material: Arc<Material>,    // Material of the sphere
 }
 
-impl Sphere {
-    /// Constructs a new Sphere object, wrapped in the Hittable enum
-    pub fn new(centre: Vec3, radius: f64, material: Arc<Material>) -> Hittable {
-        Hittable::Sphere(Sphere { centre, radius, material })
+impl MovingSphere {
+    /// Constructs a new Moving Sphere object, wrapped in the Hittable enum
+    pub fn new(
+        centre0: Vec3, centre1: Vec3, time0: f64, time1: f64, radius: f64, material: Arc<Material>
+    ) -> Hittable {
+        Hittable::MovingSphere(MovingSphere { centre0, centre1, time0, time1, radius, material })
+    }
+
+    /// Gets the centre position of the sphere at a certain time
+    pub fn centre(&self, time: f64) -> Vec3{
+        self.centre0 + ((time - self.time0) / (self.time1 - self.time0))
+            * (self.centre1 - self.centre0)
     }
 }
 
-impl HittableTrait for Sphere {
+impl HittableTrait for MovingSphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        // Calculates vector of the ray's origin to the centre of the sphere
-        let oc = ray.origin - self.centre;
+        // Calculates vector of the ray's origin to the current centre of the sphere
+        let oc = ray.origin - self.centre(ray.time);
 
         // Calculates elements of quadratic equation to solve for the points of intersection
         let a = ray.direction.length_squared();
@@ -48,7 +59,7 @@ impl HittableTrait for Sphere {
 
         // Creates a new hit record for the interaction and returns it
         let mut hit_record = HitRecord::new(ray.at(root), &self.material, root);
-        let outward_normal = (hit_record.point - self.centre) / self.radius;
+        let outward_normal = (hit_record.point - self.centre(ray.time)) / self.radius;
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)

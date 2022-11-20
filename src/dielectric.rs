@@ -34,7 +34,7 @@ impl MaterialTrait for Dielectric {
         };
 
         // Calculates unit direction of the ray in and appropriate trig values
-        let unit_direction = ray_in.get_direction().unit();
+        let unit_direction = ray_in.direction.unit();
         let cos_theta = f64::min(Vec3::dot(&-unit_direction, &hit_record.normal), 1.0);
         let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
 
@@ -47,7 +47,7 @@ impl MaterialTrait for Dielectric {
         }
 
         // Constructs the scattered ray
-        let scattered = Ray::new(hit_record.point, direction);
+        let scattered = Ray::new(hit_record.point, direction, ray_in.time);
 
         Some((&self.albedo, scattered))
     }

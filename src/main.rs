@@ -2,14 +2,16 @@
 mod vec3;
 mod ray;
 mod camera;
-mod hittable;
-mod sphere;
-mod hittable_list;
-mod materials;
 mod hit_record;
+mod hittable;
+mod hittable_list;
+mod sphere;
+mod moving_sphere;
+mod materials;
 mod lambertian;
 mod metal;
 mod dielectric;
+
 
 // Importing own crate's module behaviour
 use ray_tracing::*;
@@ -21,6 +23,7 @@ use crate::camera::Camera;
 use crate::hittable::HittableTrait;
 use crate::hittable_list::HittableList;
 use crate::sphere::Sphere;
+use crate::moving_sphere::MovingSphere;
 
 use crate::materials::MaterialTrait;
 use crate::lambertian::Lambertian;
@@ -80,6 +83,20 @@ fn in_a_weekend_scene() -> HittableList {
     world
 }
 
+/// Generates the camera for the 'Ray Tracing in a Weekend' scene
+fn in_a_weekend_camera() -> Camera {
+    let aspect_ratio = 4./3.;
+    let look_from = Vec3::new(13., 2., 3.);
+    let look_at = Vec3::new(0., 0., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+
+    Camera::new(
+        look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
+    )
+}
+
 /// Gets the colour of a given ray in the world
 fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     // Stops recursion once past the max depth
@@ -99,17 +116,17 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     }
 
     // If nothing was hit, return the sky gradient for that point
-    let unit_direction = ray.get_direction().unit();
+    let unit_direction = ray.direction.unit();
     let t = 0.5 * (unit_direction.y + 1.0);
     (1.0 - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
     // ---- IMAGE SETUP ----
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: usize = 3600;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 5000;
+    const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
@@ -123,7 +140,7 @@ fn main() {
     let aperture = 0.1;
 
     let camera = Camera::new(
-        look_from, look_at, up, 20.0, aperture, dist_to_focus, ASPECT_RATIO, 2.0
+        look_from, look_at, up, 20., aperture, dist_to_focus, ASPECT_RATIO, 2., 0., 1.
     );
 
     // ---- RENDERING THE SCENE ----

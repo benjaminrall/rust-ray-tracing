@@ -1,4 +1,4 @@
-use ray_tracing::degrees_to_radians;
+use ray_tracing::{degrees_to_radians, random_range};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -11,6 +11,8 @@ pub struct Camera {
     u: Vec3,                    // Direction of relative x axis in camera's plane
     v: Vec3,                    // Direction of relative y axis in camera's plane
     lens_radius: f64,           // Radius of the camera's lens
+    min_time: f64,              // Shutter open time
+    max_time: f64,              // Shutter close time
 }
 
 impl Camera {
@@ -24,6 +26,8 @@ impl Camera {
         focus_dist: f64,
         aspect_ratio: f64,
         viewport_height: f64,
+        min_time: f64,
+        max_time: f64
     ) -> Self {
         // Calculates viewport width and height given a field of view angle in degrees
         let theta = degrees_to_radians(vertical_fov);
@@ -45,7 +49,7 @@ impl Camera {
         // Returns fully constructed Camera
         Camera {
             origin: look_from, lower_left_corner, horizontal,
-            vertical, u, v, lens_radius: aperture / 2.0
+            vertical, u, v, lens_radius: aperture / 2.0, min_time, max_time
         }
     }
 
@@ -58,7 +62,8 @@ impl Camera {
         // Returns fully constructed Ray
         Ray::new(
             self.origin + offset, self.lower_left_corner
-            + x * self.horizontal + y * self.vertical - self.origin - offset
+            + x * self.horizontal + y * self.vertical - self.origin - offset,
+            random_range(self.min_time, self.max_time)
         )
     }
 }

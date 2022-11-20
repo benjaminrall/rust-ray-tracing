@@ -19,13 +19,13 @@ impl Metal {
 impl MaterialTrait for Metal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
         // Gets the reflected direction and constructs the scattered ray with a certain fuzz
-        let reflected = Ray::reflect(ray_in.get_direction().unit(), hit_record.normal);
+        let reflected = Ray::reflect(ray_in.direction.unit(), hit_record.normal);
         let scattered = Ray::new(
-            hit_record.point, reflected + self.fuzz * Vec3::random_in_unit_sphere()
+            hit_record.point, reflected + self.fuzz * Vec3::random_in_unit_sphere(), ray_in.time
         );
 
         // Excludes the ray if it's reflected towards the object
-        if Vec3::dot(&scattered.get_direction(), &hit_record.normal) > 0.0 {
+        if Vec3::dot(&scattered.direction, &hit_record.normal) > 0.0 {
             Some((&self.albedo, scattered))
         } else {
             None
