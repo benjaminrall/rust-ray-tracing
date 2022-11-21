@@ -124,15 +124,20 @@ impl HittableTrait for BVHNode {
             return None
         }
 
-        match self.right.hit(ray, t_min, t_max) {
-            Some(rec) => return Some(rec),
-            None => {
-                match self.left.hit(ray, t_min, t_max) {
-                    Some(rec) => return Some(rec),
-                    None => None
-                }
-            }
+        let left_hit = self.left.hit(ray, t_min, t_max);
+
+        let mut t_max = t_max;
+        if let Some(h) = &left_hit {
+            t_max = h.t;
         }
+
+        let right_hit = self.right.hit(ray, t_min, t_max);
+
+        if let Some(_) = &right_hit {
+            return right_hit
+        }
+
+        return left_hit
     }
 
     fn bounding_box(&self, _: f64, _: f64) -> Option<AABB> {

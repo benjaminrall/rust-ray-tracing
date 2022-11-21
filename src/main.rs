@@ -51,28 +51,28 @@ fn in_a_weekend_scene() -> HittableList {
 
     // Generates random spheres
     for a in -11..=11 {
-        for b in -11..=11 {
-            let choose_mat = random_double();
-            let centre = Vec3::new(
-                a as f64 + 0.9 * random_double(),
-                0.2,
-                b as f64 + 0.9 * random_double()
-            );
-            if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
-                if choose_mat < 0.8 {
-                    let albedo = Vec3::random(0., 1.) * Vec3::random(0., 1.);
-                    let sphere_material = Arc::new(Lambertian::new(albedo));
-                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
-                } else if choose_mat < 0.95 {
-                    let albedo = Vec3::random(0.5, 1.);
-                    let fuzz = random_range(0.0, 0.5);
-                    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
-                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
-                } else {
-                    let sphere_material = Arc::new(Dielectric::new(1.5));
-                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
-                }
-            }
+       for b in -11..=11 {
+           let choose_mat = random_double();
+           let centre = Vec3::new(
+               a as f64 + 0.9 * random_double(),
+               0.2,
+               b as f64 + 0.9 * random_double()
+           );
+           if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
+               if choose_mat < 0.8 {
+                   let albedo = Vec3::random(0., 1.) * Vec3::random(0., 1.);
+                   let sphere_material = Arc::new(Lambertian::new(albedo));
+                   world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
+               } else if choose_mat < 0.95 {
+                   let albedo = Vec3::random(0.5, 1.);
+                   let fuzz = random_range(0.0, 0.5);
+                   let sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                   world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
+               } else {
+                   let sphere_material = Arc::new(Dielectric::new(1.5));
+                   world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
+               }
+           }
         }
     }
 
@@ -88,8 +88,7 @@ fn in_a_weekend_scene() -> HittableList {
 }
 
 /// Generates the camera for the 'Ray Tracing in a Weekend' scene
-fn in_a_weekend_camera() -> Camera {
-    let aspect_ratio = 4./3.;
+fn in_a_weekend_camera(aspect_ratio: f64) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
@@ -139,8 +138,6 @@ fn main() {
     let mut world = HittableList::new();
     world.add(BVHNode::from_hittable_list(&objects, 0., 1.));
 
-    println!("{:?}", world);
-
     // ---- CAMERA SETUP ----
     let look_from = Vec3::new(0., 0., 5.);
     let look_at = Vec3::new(0., 0., 0.);
@@ -151,7 +148,7 @@ fn main() {
     let camera = Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, ASPECT_RATIO, 2., 0., 1.
     );
-    let camera = in_a_weekend_camera();
+    let camera = in_a_weekend_camera(ASPECT_RATIO);
 
     // ---- RENDERING THE SCENE ----
 
