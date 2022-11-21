@@ -70,8 +70,8 @@ impl BVHNode {
             }
         }
 
-        let mut box_left;
-        let mut box_right;
+        let box_left;
+        let box_right;
 
         match left.bounding_box(time0, time1) {
             Some(b) => box_left = b,

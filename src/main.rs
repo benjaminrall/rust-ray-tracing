@@ -29,7 +29,7 @@ use crate::aabb::AABB;
 use crate::sphere::Sphere;
 use crate::moving_sphere::MovingSphere;
 
-use crate::materials::{Material, MaterialTrait};
+use crate::materials::MaterialTrait;
 use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::dielectric::Dielectric;
@@ -128,13 +128,13 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 4. / 3.;
-    const IMAGE_WIDTH: usize = 400;
+    const IMAGE_WIDTH: usize = 1200;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 100;
+    const SAMPLES_PER_PIXEL: i32 = 1000;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    let mut objects = in_a_weekend_scene();
+    let objects = in_a_weekend_scene();
     let mut world = HittableList::new();
     world.add(BVHNode::from_hittable_list(&objects, 0., 1.));
 
