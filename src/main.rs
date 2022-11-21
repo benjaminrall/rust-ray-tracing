@@ -1,5 +1,3 @@
-extern crate core;
-
 // Internal module declaration
 mod vec3;
 mod ray;
