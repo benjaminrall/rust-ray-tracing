@@ -3,6 +3,7 @@ use crate::materials::{Material, MaterialTrait};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+#[derive(Debug)]
 /// Object to represent Lambertian diffuse materials
 pub struct Lambertian {
     albedo: Vec3    // Albedo of the material

@@ -11,6 +11,7 @@ pub trait MaterialTrait {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)>;
 }
 
+#[derive(Debug)]
 /// Enum storing each material variation
 pub enum Material {
     Lambertian(Lambertian),

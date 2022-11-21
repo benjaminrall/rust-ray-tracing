@@ -1,10 +1,12 @@
 use std::sync::Arc;
+use crate::aabb::AABB;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, HittableTrait};
 use crate::materials::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+#[derive(Debug)]
 /// Object to store a Moving Sphere object
 pub struct MovingSphere {
     centre0: Vec3,              // Position of the centre of the sphere at time0
@@ -63,5 +65,12 @@ impl HittableTrait for MovingSphere {
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB> {
+        let r_vec = Vec3::new(self.radius, self.radius, self.radius);
+        let box0 = AABB::new(self.centre(time0) - r_vec, self.centre(time0) + r_vec);
+        let box1 = AABB::new(self.centre(time1) - r_vec, self.centre(time1) + r_vec);
+        Some(AABB::surrounding_box(&box0, &box1))
     }
 }

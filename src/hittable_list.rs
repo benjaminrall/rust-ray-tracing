@@ -1,10 +1,13 @@
+use std::sync::Arc;
+use crate::aabb::AABB;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, HittableTrait};
 use crate::ray::Ray;
 
+#[derive(Debug)]
 /// Stores a list of Hittable objects
 pub struct HittableList {
-    objects: Vec<Hittable>
+    pub objects: Vec<Arc<Hittable>>
 }
 
 impl HittableList {
@@ -15,7 +18,7 @@ impl HittableList {
 
     /// Adds a hittable object to the internal list
     pub fn add(&mut self, object: Hittable) {
-        self.objects.push(object);
+        self.objects.push(Arc::new(object));
     }
 }
 
@@ -33,5 +36,30 @@ impl HittableTrait for HittableList {
         }
 
         hit_record
+    }
+
+    /// Gets the combined bounding box of all objects in the list
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB> {
+        if self.objects.is_empty() {
+            return None
+        }
+
+        let mut output_box: Option<AABB> = None;
+
+        for object in &self.objects {
+            match object.bounding_box(time0, time1) {
+                None => return None,
+                Some(returned_box) => {
+                    match output_box {
+                        None => output_box = Some(returned_box),
+                        Some(curr_box) => {
+                            output_box = Some(AABB::surrounding_box(&curr_box, &returned_box))
+                        }
+                    }
+                }
+            }
+        }
+
+        output_box
     }
 }

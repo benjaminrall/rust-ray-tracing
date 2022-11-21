@@ -3,6 +3,7 @@ use crate::materials::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+#[derive(Debug)]
 /// Object to store a record of a ray hit
 pub struct HitRecord {
     pub point: Vec3,                // Point of the hit

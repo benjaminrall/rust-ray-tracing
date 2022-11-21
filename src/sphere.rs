@@ -1,10 +1,12 @@
 use std::sync::Arc;
+use crate::aabb::AABB;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, HittableTrait};
 use crate::materials::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+#[derive(Debug)]
 /// Object to store a Sphere object
 pub struct Sphere {
     centre: Vec3,               // Position of the centre of the sphere
@@ -52,5 +54,10 @@ impl HittableTrait for Sphere {
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)
+    }
+
+    fn bounding_box(&self, _: f64, _: f64) -> Option<AABB> {
+        let r_vec = Vec3::new(self.radius, self.radius, self.radius);
+        Some(AABB::new(self.centre - r_vec, self.centre + r_vec))
     }
 }

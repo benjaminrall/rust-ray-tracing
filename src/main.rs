@@ -1,3 +1,5 @@
+extern crate core;
+
 // Internal module declaration
 mod vec3;
 mod ray;
@@ -5,6 +7,8 @@ mod camera;
 mod hit_record;
 mod hittable;
 mod hittable_list;
+mod aabb;
+mod bvh_node;
 mod sphere;
 mod moving_sphere;
 mod materials;
@@ -22,10 +26,12 @@ use crate::camera::Camera;
 
 use crate::hittable::HittableTrait;
 use crate::hittable_list::HittableList;
+use crate::bvh_node::BVHNode;
+use crate::aabb::AABB;
 use crate::sphere::Sphere;
 use crate::moving_sphere::MovingSphere;
 
-use crate::materials::MaterialTrait;
+use crate::materials::{Material, MaterialTrait};
 use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::dielectric::Dielectric;
@@ -36,7 +42,6 @@ use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
 
-#[warn(dead_code)]
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
     // Creates world list
@@ -109,6 +114,7 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     if let Some(hit_record) = world.hit(ray, 0.001, INFINITY) {
         // If the ray hit anything, return the result of the scattered ray against the
         // hit's material
+
         return match hit_record.material.scatter(ray, &hit_record) {
             Some((attenuation, scattered)) =>
                 *attenuation * ray_colour(&scattered, world, depth - 1),
@@ -124,25 +130,30 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
 
 fn main() {
     // ---- IMAGE SETUP ----
-    const ASPECT_RATIO: f64 = 16. / 9.;
+    const ASPECT_RATIO: f64 = 4. / 3.;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    let world = in_a_weekend_scene();
+    let mut objects = in_a_weekend_scene();
+    let mut world = HittableList::new();
+    world.add(BVHNode::from_hittable_list(&objects, 0., 1.));
+
+    println!("{:?}", world);
 
     // ---- CAMERA SETUP ----
-    let look_from = Vec3::new(13., 2., 3.);
+    let look_from = Vec3::new(0., 0., 5.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
-    let dist_to_focus = 10.;
+    let dist_to_focus = 3.;
     let aperture = 0.1;
 
     let camera = Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, ASPECT_RATIO, 2., 0., 1.
     );
+    let camera = in_a_weekend_camera();
 
     // ---- RENDERING THE SCENE ----
 

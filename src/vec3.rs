@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter};
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, Index};
 use ray_tracing::{ random_range };
 
+#[derive(Debug)]
 /// Object to represent a column vector in 3 dimensions
 pub struct Vec3 {
     pub x: f64,
@@ -209,6 +210,20 @@ impl Div<f64> for Vec3 {
 impl DivAssign<f64> for Vec3 {
     fn div_assign(&mut self, rhs: f64) {
         *self *= 1. / rhs;
+    }
+}
+
+/// Implements indexing a vector to access elements
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Attempted to access an out of range Vec3 index.")
+        }
     }
 }
 

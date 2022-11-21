@@ -4,6 +4,7 @@ use crate::materials::{Material, MaterialTrait};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
+#[derive(Debug)]
 /// Object to represent Dielectric materials such as water and glass
 pub struct Dielectric {
     albedo: Vec3,           // Albedo of the material
