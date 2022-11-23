@@ -16,6 +16,15 @@ impl HittableList {
         HittableList { objects: vec![] }
     }
 
+    /// Generates a list from a list of objects
+    pub fn from_objects(objects: Vec<Hittable>) -> Self {
+        let mut list = HittableList::new();
+        for obj in objects {
+            list.add(obj)
+        }
+        list
+    }
+
     /// Adds a hittable object to the internal list
     pub fn add(&mut self, object: Hittable) {
         self.objects.push(Arc::new(object));

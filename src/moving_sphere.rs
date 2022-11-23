@@ -1,9 +1,11 @@
 use std::sync::Arc;
+use ray_tracing::PI;
 use crate::aabb::AABB;
 use crate::hit_record::HitRecord;
 use crate::hittable::{Hittable, HittableTrait};
-use crate::materials::Material;
+use crate::material::Material;
 use crate::ray::Ray;
+use crate::sphere::Sphere;
 use crate::vec3::Vec3;
 
 #[derive(Debug)]
@@ -60,8 +62,10 @@ impl HittableTrait for MovingSphere {
         }
 
         // Creates a new hit record for the interaction and returns it
-        let mut hit_record = HitRecord::new(ray.at(root), &self.material, root);
-        let outward_normal = (hit_record.point - self.centre(ray.time)) / self.radius;
+        let record_point = ray.at(root);
+        let outward_normal = (record_point - self.centre(ray.time)) / self.radius;
+        let mut hit_record = HitRecord::new(record_point, &self.material,
+                                            Sphere::get_sphere_uv(record_point), root);
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)

@@ -1,6 +1,6 @@
 use ray_tracing::random_double;
 use crate::hit_record::HitRecord;
-use crate::materials::{Material, MaterialTrait};
+use crate::material::{Material, MaterialTrait};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -26,7 +26,7 @@ impl Dielectric {
 }
 
 impl MaterialTrait for Dielectric {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
         // Calculates refraction ratio depending on if the front face of the object was hit
         let refraction_ratio = if hit_record.front_face {
             1. / self.refraction_index
@@ -50,6 +50,6 @@ impl MaterialTrait for Dielectric {
         // Constructs the scattered ray
         let scattered = Ray::new(hit_record.point, direction, ray_in.time);
 
-        Some((&self.albedo, scattered))
+        Some((self.albedo, scattered))
     }
 }

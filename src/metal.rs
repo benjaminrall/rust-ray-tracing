@@ -1,5 +1,5 @@
 use crate::hit_record::HitRecord;
-use crate::materials::{Material, MaterialTrait};
+use crate::material::{Material, MaterialTrait};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -18,7 +18,7 @@ impl Metal {
 }
 
 impl MaterialTrait for Metal {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(&Vec3, Ray)> {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
         // Gets the reflected direction and constructs the scattered ray with a certain fuzz
         let reflected = Ray::reflect(ray_in.direction.unit(), hit_record.normal);
         let scattered = Ray::new(
@@ -27,7 +27,7 @@ impl MaterialTrait for Metal {
 
         // Excludes the ray if it's reflected towards the object
         if Vec3::dot(&scattered.direction, &hit_record.normal) > 0. {
-            Some((&self.albedo, scattered))
+            Some((self.albedo, scattered))
         } else {
             None
         }

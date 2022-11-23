@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::materials::Material;
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -10,14 +10,17 @@ pub struct HitRecord {
     pub normal: Vec3,               // Normal of the face of the object hit
     pub material: Arc<Material>,    // Material of the object hit
     pub t: f64,                     // Time in the ray's lifetime that the hit occurred
+    pub u: f64,                     // U coordinate of hit
+    pub v: f64,                     // V coordinate of hit
     pub front_face: bool            // Stores if the hit was on an outward face of the object hit
 }
 
 impl HitRecord {
     /// Constructs a new Hit Record
-    pub fn new(point: Vec3, material: &Arc<Material>, t: f64) -> Self {
+    pub fn new(point: Vec3, material: &Arc<Material>, uv: (f64, f64), t: f64) -> Self {
         HitRecord {
-            point, t, normal: Vec3::zero(), material: Arc::clone(material), front_face: false
+            point, t, material: Arc::clone(material),
+            normal: Vec3::zero(), u: uv.0, v: uv.1, front_face: false
         }
     }
 
