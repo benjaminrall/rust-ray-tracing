@@ -16,6 +16,8 @@ mod dielectric;
 mod texture;
 mod solid_colour;
 mod checker_texture;
+mod perlin;
+mod noise_texture;
 
 
 // Importing own crate's module behaviour
@@ -43,6 +45,7 @@ use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
 use crate::checker_texture::CheckerTexture;
+use crate::noise_texture::{NoiseTexture, NoiseType};
 
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
@@ -120,6 +123,32 @@ fn two_spheres_scene() -> HittableList {
 
 /// Generates the camera for the two spheres scene
 fn two_spheres_camera(aspect_ratio: f64) -> Camera {
+    let look_from = Vec3::new(13., 2., 3.);
+    let look_at = Vec3::new(0., 0., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.;
+    let aperture = 0.0;
+
+    Camera::new(
+        look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
+    )
+}
+
+/// Generates a scene with two perlin noise spheres
+fn two_perlin_spheres_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let perlin_texture = Arc::new(NoiseTexture::new(4., NoiseType::Marbled));
+    let material = Arc::new(Lambertian::from_texture(
+        Arc::clone(&perlin_texture)));
+    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000., Arc::clone(&material)));
+    world.add(Sphere::new(Vec3::new(0., 2., 0.), 2., Arc::clone(&material)));
+
+    world
+}
+
+/// Generates the camera for the two perlin spheres scene
+fn two_perlin_spheres_camera(aspect_ratio: f64) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
@@ -222,24 +251,26 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 3./2.;
-    const IMAGE_WIDTH: usize = 400;
+    const IMAGE_WIDTH: usize = 1200;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 100;
+    const SAMPLES_PER_PIXEL: i32 = 1000;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 0;
+    const WORLD_TYPE: usize = 3;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
         2 => two_spheres_scene(),
-        _ => working_scene()
+        3 => two_perlin_spheres_scene(),
+        _ => working_scene(),
     };
 
     // ---- CAMERA SETUP ----
     let camera = match WORLD_TYPE {
         1 => working_camera(ASPECT_RATIO),
         2 => two_spheres_camera(ASPECT_RATIO),
-        _ => working_camera(ASPECT_RATIO)
+        3 => two_perlin_spheres_camera(ASPECT_RATIO),
+        _ => working_camera(ASPECT_RATIO),
     };
 
     // ---- RENDERING THE SCENE ----
