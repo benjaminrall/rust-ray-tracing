@@ -65,8 +65,8 @@ impl BVHNode {
                 );
 
                 let mid = start + object_span / 2;
-                left = Arc::new(BVHNode::new(&objects, start, mid, time0, time1));
-                right = Arc::new(BVHNode::new(&objects, mid, end, time0, time1));
+                left = Arc::new(BVHNode::new(&src_objects, start, mid, time0, time1));
+                right = Arc::new(BVHNode::new(&src_objects, mid, end, time0, time1));
             }
         }
 

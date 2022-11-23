@@ -41,7 +41,7 @@ impl AABB {
             // Swaps values if the inverse direction is negative
             if inv_d < 0. {
                 let temp = t0;
-                t0 = t1;
+                t0 = t1.clone();
                 t1 = temp;
             }
 
