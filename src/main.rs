@@ -128,9 +128,9 @@ fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 4. / 3.;
-    const IMAGE_WIDTH: usize = 1200;
+    const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 1000;
+    const SAMPLES_PER_PIXEL: i32 = 10;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
