@@ -64,8 +64,9 @@ impl HittableTrait for MovingSphere {
         // Creates a new hit record for the interaction and returns it
         let record_point = ray.at(root);
         let outward_normal = (record_point - self.centre(ray.time)) / self.radius;
+        let (u, v) = Sphere::get_sphere_uv(outward_normal);
         let mut hit_record = HitRecord::new(record_point, &self.material,
-                                            Sphere::get_sphere_uv(record_point), root);
+                                            u, v, root);
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)

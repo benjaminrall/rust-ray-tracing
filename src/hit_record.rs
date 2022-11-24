@@ -17,10 +17,10 @@ pub struct HitRecord {
 
 impl HitRecord {
     /// Constructs a new Hit Record
-    pub fn new(point: Vec3, material: &Arc<Material>, uv: (f64, f64), t: f64) -> Self {
+    pub fn new(point: Vec3, material: &Arc<Material>, u: f64, v: f64, t: f64) -> Self {
         HitRecord {
             point, t, material: Arc::clone(material),
-            normal: Vec3::zero(), u: uv.0, v: uv.1, front_face: false
+            normal: Vec3::zero(), u, v, front_face: false
         }
     }
 

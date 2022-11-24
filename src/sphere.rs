@@ -22,8 +22,8 @@ impl Sphere {
     }
 
     pub fn get_sphere_uv(p: Vec3) -> (f64, f64) {
-        let theta = -p.y.acos();
-        let phi = -p.z.atan2(p.x) + PI;
+        let theta = f64::acos(-p.y);
+        let phi = f64::atan2(-p.z, p.x) + PI;
 
         (phi / (2. * PI), theta / PI)
     }
@@ -59,8 +59,9 @@ impl HittableTrait for Sphere {
         // Creates a new hit record for the interaction and returns it
         let record_point = ray.at(root);
         let outward_normal = (record_point - self.centre) / self.radius;
+        let (u, v) = Sphere::get_sphere_uv(outward_normal);
         let mut hit_record = HitRecord::new(ray.at(root), &self.material,
-                                            Sphere::get_sphere_uv(record_point), root);
+                                            u, v, root);
         hit_record.calculate_face_normal(ray, outward_normal);
 
         Some(hit_record)
