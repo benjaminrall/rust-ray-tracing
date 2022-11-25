@@ -4,6 +4,7 @@ use crate::hit_record::HitRecord;
 use crate::moving_sphere::MovingSphere;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
+use crate::aa_rect::XYRect;
 
 /// Trait implemented by all hittable objects
 pub trait HittableTrait {
@@ -19,7 +20,8 @@ pub trait HittableTrait {
 pub enum Hittable {
     BVHNode(BVHNode),
     Sphere(Sphere),
-    MovingSphere(MovingSphere)
+    MovingSphere(MovingSphere),
+    XYRect(XYRect),
 }
 
 /// Calls methods for objects in the Hittable enum
@@ -29,6 +31,7 @@ impl HittableTrait for Hittable {
             Hittable::BVHNode(obj) => obj.hit(ray, t_min, t_max),
             Hittable::Sphere(obj) => obj.hit(ray, t_min, t_max),
             Hittable::MovingSphere(obj) => obj.hit(ray, t_min, t_max),
+            Hittable::XYRect(obj) => obj.hit(ray, t_min, t_max),
         }
     }
 
@@ -37,6 +40,7 @@ impl HittableTrait for Hittable {
             Hittable::BVHNode(obj) => obj.bounding_box(time0, time1),
             Hittable::Sphere(obj) => obj.bounding_box(time0, time1),
             Hittable::MovingSphere(obj) => obj.bounding_box(time0, time1),
+            Hittable::XYRect(obj) => obj.bounding_box(time0, time1),
         }
     }
 }

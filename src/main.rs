@@ -9,17 +9,18 @@ mod aabb;
 mod bvh_node;
 mod sphere;
 mod moving_sphere;
+mod aa_rect;
 mod material;
 mod lambertian;
 mod metal;
 mod dielectric;
+mod diffuse_light;
 mod texture;
 mod solid_colour;
 mod checker_texture;
 mod perlin;
 mod noise_texture;
 mod image_texture;
-
 
 // Importing own crate's module behaviour
 use ray_tracing::*;
@@ -40,14 +41,19 @@ use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::dielectric::Dielectric;
 
+use crate::texture::TextureTrait;
+use crate::solid_colour::SolidColour;
+use crate::checker_texture::CheckerTexture;
+use crate::image_texture::ImageTexture;
+use crate::noise_texture::{NoiseTexture, NoiseType};
+
 // Importing other crates
 use std::sync::Arc;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
-use crate::checker_texture::CheckerTexture;
-use crate::image_texture::ImageTexture;
-use crate::noise_texture::{NoiseTexture, NoiseType};
+use crate::diffuse_light::DiffuseLight;
+use crate::aa_rect::XYRect;
 
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
@@ -98,12 +104,13 @@ fn in_a_weekend_scene() -> HittableList {
 }
 
 /// Generates the camera for the 'Ray Tracing in a Weekend' scene
-fn in_a_weekend_camera(aspect_ratio: f64) -> Camera {
+fn in_a_weekend_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.;
     let aperture = 0.1;
+    *background =Vec3::new(0.7, 0.8, 1.);
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
@@ -124,12 +131,13 @@ fn two_spheres_scene() -> HittableList {
 }
 
 /// Generates the camera for the two spheres scene
-fn two_spheres_camera(aspect_ratio: f64) -> Camera {
+fn two_spheres_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.;
     let aperture = 0.0;
+    *background =Vec3::new(0.7, 0.8, 1.);
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
@@ -150,12 +158,13 @@ fn two_perlin_spheres_scene() -> HittableList {
 }
 
 /// Generates the camera for the two perlin spheres scene
-fn two_perlin_spheres_camera(aspect_ratio: f64) -> Camera {
+fn two_perlin_spheres_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.;
     let aperture = 0.0;
+    *background = Vec3::new(0.7, 0.8, 1.);
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
@@ -174,12 +183,44 @@ fn earth_scene() -> HittableList {
 }
 
 /// Generates the camera for the earth scene
-fn earth_camera(aspect_ratio: f64) -> Camera {
+fn earth_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.;
     let aperture = 0.0;
+    *background =Vec3::new(0.7, 0.8, 1.);
+
+    Camera::new(
+        look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
+    )
+}
+
+/// Generates scene with a simple light
+fn simple_light_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let perlin_texture = Arc::new(NoiseTexture::new(4., NoiseType::Marbled));
+    let material = Arc::new(Lambertian::from_texture(
+        Arc::clone(&perlin_texture)));
+    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000., Arc::clone(&material)));
+    world.add(Sphere::new(Vec3::new(0., 2., 0.), 2., Arc::clone(&material)));
+
+    let light_mat = Arc::new(DiffuseLight::from_colour(4., 4., 4.));
+    world.add(XYRect::new(3., 5., 1., 3., -2., Arc::clone(&light_mat)));
+    world.add(Sphere::new(Vec3::new(0., 6.5, 0.), 2., Arc::clone(&light_mat)));
+
+    world
+}
+
+/// Generates the camera for the simple light scene
+fn simple_light_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
+    let look_from = Vec3::new(26., 3., 6.);
+    let look_at = Vec3::new(0., 2., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.;
+    let aperture = 0.0;
+    *background = Vec3::zero();
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
@@ -237,12 +278,13 @@ fn working_scene() -> HittableList {
 }
 
 /// Current working camera
-fn working_camera(aspect_ratio: f64) -> Camera {
+fn working_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     let look_from = Vec3::new(13., 2., 3.);
     let look_at = Vec3::new(0., 0., 0.);
     let up = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.;
     let aperture = 0.1;
+    *background = Vec3::new(0.7, 0.8, 1.);
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 1.
@@ -250,28 +292,27 @@ fn working_camera(aspect_ratio: f64) -> Camera {
 }
 
 /// Gets the colour of a given ray in the world
-fn ray_colour(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
+fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> Vec3 {
     // Stops recursion once past the max depth
     if depth <= 0 {
         return Vec3::zero();
     }
 
+
     // Checks if the ray hit anything in the world
     if let Some(hit_record) = world.hit(ray, 0.001, INFINITY) {
+        let emitted = hit_record.material.emitted(hit_record.u, hit_record.v, &hit_record.point);
+
         // If the ray hit anything, return the result of the scattered ray against the
         // hit's material
-
-        return match hit_record.material.scatter(ray, &hit_record) {
+        match hit_record.material.scatter(ray, &hit_record) {
             Some((attenuation, scattered)) =>
-                attenuation * ray_colour(&scattered, world, depth - 1),
-            None => Vec3::zero()
+                emitted + attenuation * ray_colour(&scattered, background, world, depth - 1),
+            None => emitted
         }
+    } else {
+        background
     }
-
-    // If nothing was hit, return the sky gradient for that point
-    let unit_direction = ray.direction.unit();
-    let t = 0.5 * (unit_direction.y + 1.);
-    (1. - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.)
 }
 
 fn main() {
@@ -279,26 +320,29 @@ fn main() {
     const ASPECT_RATIO: f64 = 3./2.;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 100;
+    const SAMPLES_PER_PIXEL: i32 = 1000;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 4;
+    const WORLD_TYPE: usize = 5;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
         2 => two_spheres_scene(),
         3 => two_perlin_spheres_scene(),
         4 => earth_scene(),
+        5 => simple_light_scene(),
         _ => working_scene(),
     };
 
     // ---- CAMERA SETUP ----
+    let mut background = Vec3::zero();
     let camera = match WORLD_TYPE {
-        1 => working_camera(ASPECT_RATIO),
-        2 => two_spheres_camera(ASPECT_RATIO),
-        3 => two_perlin_spheres_camera(ASPECT_RATIO),
-        4 => earth_camera(ASPECT_RATIO),
-        _ => working_camera(ASPECT_RATIO),
+        1 => working_camera(ASPECT_RATIO, &mut background),
+        2 => two_spheres_camera(ASPECT_RATIO, &mut background),
+        3 => two_perlin_spheres_camera(ASPECT_RATIO, &mut background),
+        4 => earth_camera(ASPECT_RATIO, &mut background),
+        5 => simple_light_camera(ASPECT_RATIO, &mut background),
+        _ => working_camera(ASPECT_RATIO, &mut background),
     };
 
     // ---- RENDERING THE SCENE ----
@@ -326,7 +370,7 @@ fn main() {
             let u = (x as f64 + random_double()) / (IMAGE_WIDTH - 1) as f64;
             let v = (y as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
             let r = camera.get_ray(u, v);
-            pixel_colour += ray_colour(&r, &world, MAX_DEPTH);
+            pixel_colour += ray_colour(&r, background, &world, MAX_DEPTH);
         }
 
         // Averages pixel colour over all samples
