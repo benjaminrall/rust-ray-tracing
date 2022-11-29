@@ -13,11 +13,13 @@ mod aa_rect;
 mod aa_box;
 mod translate;
 mod rotate_y;
+mod constant_medium;
 mod material;
 mod lambertian;
 mod metal;
 mod dielectric;
 mod diffuse_light;
+mod isotropic;
 mod texture;
 mod solid_colour;
 mod checker_texture;
@@ -40,11 +42,14 @@ use crate::moving_sphere::MovingSphere;
 use crate::aa_rect::{XYRect, XZRect, YZRect};
 use crate::aa_box::AABox;
 use crate::translate::Translate;
+use crate::rotate_y::RotateY;
+use crate::constant_medium::ConstantMedium;
 use crate::material::MaterialTrait;
 use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::dielectric::Dielectric;
 use crate::diffuse_light::DiffuseLight;
+use crate::isotropic::Isotropic;
 use crate::texture::TextureTrait;
 use crate::solid_colour::SolidColour;
 use crate::checker_texture::CheckerTexture;
@@ -56,7 +61,6 @@ use std::sync::Arc;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
-use crate::rotate_y::RotateY;
 
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
@@ -117,6 +121,70 @@ fn in_a_weekend_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
 
     Camera::new(
         look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
+    )
+}
+
+/// Generates scene with bouncing balls and a checkered texture
+fn bouncing_balls_scene() -> HittableList {
+    // Creates world list
+    let mut world = HittableList::new();
+
+    // Sets up ground
+    let texture = Arc::new(CheckerTexture::new(
+        Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9)));
+    let ground_material = Arc::new(Lambertian::from_texture(Arc::clone(&texture)));
+    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000., Arc::clone(&ground_material)));
+
+    // Generates random spheres
+    for a in -11..=11 {
+        for b in -11..=11 {
+            let choose_mat = random_double();
+            let centre = Vec3::new(
+                a as f64 + 0.9 * random_double(),
+                0.2,
+                b as f64 + 0.9 * random_double()
+            );
+            if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    let albedo = Vec3::random(0., 1.) * Vec3::random(0., 1.);
+                    let sphere_material = Arc::new(Lambertian::new(albedo));
+                    let centre2 = centre + Vec3::new(0., random_range(0., 0.5), 0.);
+                    world.add(MovingSphere::new(centre, centre2, 0., 1., 0.2, Arc::clone(&sphere_material)));
+                } else if choose_mat < 0.95 {
+                    let albedo = Vec3::random(0.5, 1.);
+                    let fuzz = random_range(0.0, 0.5);
+                    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
+                } else {
+                    let sphere_material = Arc::new(Dielectric::new(1.5));
+                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
+                }
+            }
+        }
+    }
+
+    // Adds three main spheres
+    let material1 = Arc::new(Dielectric::new(1.5));
+    let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
+    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.));
+    world.add(Sphere::new(Vec3::new(0., 1., 0.), 1., Arc::clone(&material1)));
+    world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1., Arc::clone(&material2)));
+    world.add(Sphere::new(Vec3::new(4., 1., 0.), 1., Arc::clone(&material3)));
+
+    HittableList::from_objects(vec![BVHNode::from_hittable_list(&world, 0., 1.)])
+}
+
+/// Generates camera for bouncing balls scene
+fn bouncing_balls_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
+    let look_from = Vec3::new(13., 2., 3.);
+    let look_at = Vec3::new(0., 0., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.;
+    let aperture = 0.1;
+    *background = Vec3::new(0.7, 0.8, 1.);
+
+    Camera::new(
+        look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 1.
     )
 }
 
@@ -271,68 +339,39 @@ fn cornell_box_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     )
 }
 
-/// Current working scene
-fn working_scene() -> HittableList {
-    // Creates world list
+/// Generates Cornell Box scene with fog
+fn cornell_box_smoke_scene() -> HittableList {
     let mut world = HittableList::new();
 
-    // Sets up ground
-    let texture = Arc::new(CheckerTexture::new(
-        Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9)));
-    let ground_material = Arc::new(Lambertian::from_texture(Arc::clone(&texture)));
-    world.add(Sphere::new(Vec3::new(0., -1000., 0.), 1000., Arc::clone(&ground_material)));
+    let red = Arc::new(Lambertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::from_colour(7., 7., 7.));
 
-    // Generates random spheres
-    for a in -11..=11 {
-        for b in -11..=11 {
-            let choose_mat = random_double();
-            let centre = Vec3::new(
-                a as f64 + 0.9 * random_double(),
-                0.2,
-                b as f64 + 0.9 * random_double()
-            );
-            if (centre - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
-                if choose_mat < 0.8 {
-                    let albedo = Vec3::random(0., 1.) * Vec3::random(0., 1.);
-                    let sphere_material = Arc::new(Lambertian::new(albedo));
-                    let centre2 = centre + Vec3::new(0., random_range(0., 0.5), 0.);
-                    world.add(MovingSphere::new(centre, centre2, 0., 1., 0.2, Arc::clone(&sphere_material)));
-                } else if choose_mat < 0.95 {
-                    let albedo = Vec3::random(0.5, 1.);
-                    let fuzz = random_range(0.0, 0.5);
-                    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
-                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
-                } else {
-                    let sphere_material = Arc::new(Dielectric::new(1.5));
-                    world.add(Sphere::new(centre, 0.2, Arc::clone(&sphere_material)));
-                }
-            }
-        }
-    }
+    world.add(YZRect::new(0., 555., 0., 555., 555., Arc::clone(&green)));
+    world.add(YZRect::new(0., 555., 0., 555., 0., Arc::clone(&red)));
+    world.add(XZRect::new(113., 443., 127., 432., 554., Arc::clone(&light)));
+    world.add(XZRect::new(0., 555., 0., 555., 0., Arc::clone(&white)));
+    world.add(XZRect::new(0., 555., 0., 555., 555., Arc::clone(&white)));
+    world.add(XYRect::new(0., 555., 0., 555., 555., Arc::clone(&white)));
 
-    // Adds three main spheres
-    let material1 = Arc::new(Dielectric::new(1.5));
-    let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
-    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.));
-    world.add(Sphere::new(Vec3::new(0., 1., 0.), 1., Arc::clone(&material1)));
-    world.add(Sphere::new(Vec3::new(-4., 1., 0.), 1., Arc::clone(&material2)));
-    world.add(Sphere::new(Vec3::new(4., 1., 0.), 1., Arc::clone(&material3)));
+    let box1 = Arc::new(AABox::new(Vec3::new(0., 0., 0.), Vec3::new(165., 330., 165.), Arc::clone(&white)));
+    let box1 = Arc::new(RotateY::new(Arc::clone(&box1), 15.));
+    let box1 = Arc::new(Translate::new(Arc::clone(&box1), Vec3::new(265., 0., 295.)));
 
-    HittableList::from_objects(vec![BVHNode::from_hittable_list(&world, 0., 1.)])
+    let box2 = Arc::new(AABox::new(Vec3::new(0., 0., 0.), Vec3::new(165., 165., 165.), Arc::clone(&white)));
+    let box2 = Arc::new(RotateY::new(Arc::clone(&box2), -18.));
+    let box2 = Arc::new(Translate::new(Arc::clone(&box2), Vec3::new(130., 0., 65.)));
+
+    world.add(ConstantMedium::from_colour(Arc::clone(&box1), 0.01, Vec3::zero()));
+    world.add(ConstantMedium::from_colour(Arc::clone(&box2), 0.01, Vec3::one()));
+
+    world
 }
 
-/// Current working camera
-fn working_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
-    let look_from = Vec3::new(13., 2., 3.);
-    let look_at = Vec3::new(0., 0., 0.);
-    let up = Vec3::new(0., 1., 0.);
-    let dist_to_focus = 10.;
-    let aperture = 0.1;
-    *background = Vec3::new(0.7, 0.8, 1.);
-
-    Camera::new(
-        look_from, look_at, up, 20., aperture, dist_to_focus, aspect_ratio, 2., 0., 1.
-    )
+/// Generates the camera for the Cornell Box scene
+fn cornell_box_smoke_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
+    cornell_box_camera(aspect_ratio, background)
 }
 
 /// Gets the colour of a given ray in the world
@@ -362,33 +401,35 @@ fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> 
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 1200;
+    const IMAGE_WIDTH: usize = 600;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 50000;
+    const SAMPLES_PER_PIXEL: i32 = 200;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 6;
+    const WORLD_TYPE: usize = 8;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
-        2 => two_spheres_scene(),
-        3 => two_perlin_spheres_scene(),
-        4 => earth_scene(),
-        5 => simple_light_scene(),
-        6 => cornell_box_scene(),
-        _ => working_scene(),
+        2 => bouncing_balls_scene(),
+        3 => two_spheres_scene(),
+        4 => two_perlin_spheres_scene(),
+        5 => earth_scene(),
+        6 => simple_light_scene(),
+        7 => cornell_box_scene(),
+        _ => cornell_box_smoke_scene(),
     };
 
     // ---- CAMERA SETUP ----
     let mut background = Vec3::zero();
     let camera = match WORLD_TYPE {
-        1 => working_camera(ASPECT_RATIO, &mut background),
-        2 => two_spheres_camera(ASPECT_RATIO, &mut background),
-        3 => two_perlin_spheres_camera(ASPECT_RATIO, &mut background),
-        4 => earth_camera(ASPECT_RATIO, &mut background),
-        5 => simple_light_camera(ASPECT_RATIO, &mut background),
-        6 => cornell_box_camera(ASPECT_RATIO, &mut background),
-        _ => working_camera(ASPECT_RATIO, &mut background),
+        1 => in_a_weekend_camera(ASPECT_RATIO, &mut background),
+        2 => bouncing_balls_camera(ASPECT_RATIO, &mut background),
+        3 => two_spheres_camera(ASPECT_RATIO, &mut background),
+        4 => two_perlin_spheres_camera(ASPECT_RATIO, &mut background),
+        5 => earth_camera(ASPECT_RATIO, &mut background),
+        6 => simple_light_camera(ASPECT_RATIO, &mut background),
+        7 => cornell_box_camera(ASPECT_RATIO, &mut background),
+        _ => cornell_box_smoke_camera(ASPECT_RATIO, &mut background),
     };
 
     // ---- RENDERING THE SCENE ----

@@ -6,6 +6,7 @@ use crate::moving_sphere::MovingSphere;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::aa_rect::{XYRect, XZRect, YZRect};
+use crate::constant_medium::ConstantMedium;
 use crate::rotate_y::RotateY;
 use crate::translate::Translate;
 
@@ -30,6 +31,7 @@ pub enum Hittable {
     AABox(AABox),
     Translate(Translate),
     RotateY(RotateY),
+    ConstantMedium(ConstantMedium),
 }
 
 /// Calls methods for objects in the Hittable enum
@@ -45,6 +47,7 @@ impl HittableTrait for Hittable {
             Hittable::AABox(obj) => obj.hit(ray, t_min, t_max),
             Hittable::Translate(obj) => obj.hit(ray, t_min, t_max),
             Hittable::RotateY(obj) => obj.hit(ray, t_min, t_max),
+            Hittable::ConstantMedium(obj) => obj.hit(ray, t_min, t_max),
         }
     }
 
@@ -59,6 +62,7 @@ impl HittableTrait for Hittable {
             Hittable::AABox(obj) => obj.bounding_box(time0, time1),
             Hittable::Translate(obj) => obj.bounding_box(time0, time1),
             Hittable::RotateY(obj) => obj.bounding_box(time0, time1),
+            Hittable::ConstantMedium(obj) => obj.bounding_box(time0, time1),
         }
     }
 }

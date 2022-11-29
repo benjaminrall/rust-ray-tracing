@@ -1,6 +1,7 @@
 use crate::dielectric::Dielectric;
 use crate::diffuse_light::DiffuseLight;
 use crate::hit_record::HitRecord;
+use crate::isotropic::Isotropic;
 use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::ray::Ray;
@@ -24,6 +25,7 @@ pub enum Material {
     Metal(Metal),
     Dielectric(Dielectric),
     DiffuseLight(DiffuseLight),
+    Isotropic(Isotropic),
 }
 
 /// Calls methods for materials in the Material enum
@@ -34,6 +36,7 @@ impl MaterialTrait for Material {
             Material::Metal(obj) => obj.scatter(ray_in, hit_record),
             Material::Dielectric(obj) => obj.scatter(ray_in, hit_record),
             Material::DiffuseLight(obj) => obj.scatter(ray_in, hit_record),
+            Material::Isotropic(obj) => obj.scatter(ray_in, hit_record),
         }
     }
 
@@ -43,6 +46,7 @@ impl MaterialTrait for Material {
             Material::Metal(obj) => obj.emitted(u, v, p),
             Material::Dielectric(obj) => obj.emitted(u, v, p),
             Material::DiffuseLight(obj) => obj.emitted(u, v, p),
+            Material::Isotropic(obj) => obj.emitted(u, v, p),
         }
     }
 }

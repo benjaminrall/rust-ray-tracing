@@ -56,16 +56,14 @@ impl RotateY {
 
     fn rotate_ray_vec(&self, v: &Vec3) -> Vec3 {
         Vec3::new(
-            self.cos_theta * v.x - self.sin_theta * v.z,
-            v.y,
+            self.cos_theta * v.x - self.sin_theta * v.z, v.y,
             self.sin_theta * v.x + self.cos_theta * v.z
         )
     }
 
     fn rotate_record_vec(&self, v: &Vec3) -> Vec3 {
         Vec3::new(
-            self.cos_theta * v.x + self.sin_theta * v.z,
-            v.y,
+            self.cos_theta * v.x + self.sin_theta * v.z, v.y,
             -self.sin_theta * v.x + self.cos_theta * v.z
         )
     }
