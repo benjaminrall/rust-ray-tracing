@@ -29,6 +29,11 @@ impl HittableList {
     pub fn add(&mut self, object: Hittable) {
         self.objects.push(Arc::new(object));
     }
+
+    /// Adds a hittable object to the internal list directly from an Arc
+    pub fn add_arc(&mut self, object: Arc<Hittable>) {
+        self.objects.push(object);
+    }
 }
 
 impl HittableTrait for HittableList {

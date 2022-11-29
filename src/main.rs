@@ -29,7 +29,6 @@ mod image_texture;
 
 // Importing own crate's module behaviour
 use ray_tracing::*;
-
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::camera::Camera;
@@ -374,13 +373,92 @@ fn cornell_box_smoke_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera 
     cornell_box_camera(aspect_ratio, background)
 }
 
+/// Generates the final scene of 'Ray Tracing The Next Week'
+fn the_next_week_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground = Arc::new(Lambertian::new(Vec3::new(0.48, 0.83, 0.53)));
+
+    let mut boxes1 = HittableList::new();
+    const BOXES_PER_SIDE: i32 = 20;
+    for i in 0..BOXES_PER_SIDE {
+        for j in 0..BOXES_PER_SIDE {
+            let w = 100.;
+            let x0 = -1000. + i as f64 * w;
+            let y0 = 0.;
+            let z0 = -1000. + j as f64 * w;
+            let x1 = x0 + w;
+            let y1 = random_range(1., 101.);
+            let z1 = z0 + w;
+
+            boxes1.add(AABox::new(
+                Vec3::new(x0, y0, z0), Vec3::new(x1, y1, z1),
+                Arc::clone(&ground))
+            );
+        }
+    }
+
+    world.add(BVHNode::from_hittable_list(&boxes1, 0., 1.));
+
+    let light = Arc::new(DiffuseLight::from_colour(7., 7., 7.));
+    world.add(XZRect::new(123., 423., 147., 412., 554., Arc::clone(&light)));
+
+    let centre1 = Vec3::new(400., 400., 200.);
+    let centre2 = centre1 + Vec3::new(30., 0., 0.);
+    let moving_sphere_mat = Arc::new(Lambertian::new(Vec3::new(0.7, 0.3, 0.1)));
+    world.add(MovingSphere::new(centre1, centre2, 0., 1., 50., Arc::clone(&moving_sphere_mat)));
+
+    let glass = Arc::new(Dielectric::new(1.5));
+    world.add(Sphere::new(Vec3::new(260., 150., 45.), 50., Arc::clone(&glass)));
+    world.add(Sphere::new(Vec3::new(0., 150., 145.), 50., Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.9), 1.))));
+
+    let boundary = Arc::new(Sphere::new(Vec3::new(360., 150., 145.), 70., Arc::clone(&glass)));
+    world.add_arc(Arc::clone(&boundary));
+    world.add(ConstantMedium::from_colour(Arc::clone(&boundary), 0.2, Vec3::new(0.2, 0.4, 0.9)));
+    let boundary = Arc::new(Sphere::new(Vec3::new(0., 0., 0.), 5000., Arc::clone(&glass)));
+    world.add(ConstantMedium::from_colour(Arc::clone(&boundary), 0.0001, Vec3::one()));
+
+    let earth_mat = Arc::new(Lambertian::from_texture(Arc::new(ImageTexture::new("earthmap.jpg"))));
+    world.add(Sphere::new(Vec3::new(400., 200., 400.), 100., Arc::clone(&earth_mat)));
+    let noise_mat = Arc::new(Lambertian::from_texture( Arc::new(NoiseTexture::new(0.1, NoiseType::Marbled))));
+    world.add(Sphere::new(Vec3::new(220., 280., 300.), 80., Arc::clone(&noise_mat)));
+
+    let mut boxes2 = HittableList::new();
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    for _ in 0..1000 {
+        boxes2.add(Sphere::new(Vec3::random(0., 165.), 10., Arc::clone(&white)));
+    }
+
+    world.add(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(BVHNode::from_hittable_list(&boxes2, 0., 1.)), 15.
+        )),
+        Vec3::new(-100., 270., 395.))
+    );
+
+    HittableList::from_objects(vec![BVHNode::from_hittable_list(&world, 0., 1.)])
+}
+
+/// Generates the camera for the 'Ray Tracing The Next Week' scene
+fn the_next_week_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
+    let look_from = Vec3::new(478., 278., -600.);
+    let look_at = Vec3::new(278., 278., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.;
+    let aperture = 0.0;
+    *background = Vec3::zero();
+
+    Camera::new(
+        look_from, look_at, up, 40., aperture, dist_to_focus, aspect_ratio, 2., 0., 1.
+    )
+}
+
 /// Gets the colour of a given ray in the world
 fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> Vec3 {
     // Stops recursion once past the max depth
     if depth <= 0 {
         return Vec3::zero();
     }
-
 
     // Checks if the ray hit anything in the world
     if let Some(hit_record) = world.hit(ray, 0.001, INFINITY) {
@@ -401,13 +479,13 @@ fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> 
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 600;
+    const IMAGE_WIDTH: usize = 1200;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 200;
+    const SAMPLES_PER_PIXEL: i32 = 50000;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 8;
+    const WORLD_TYPE: usize = 0;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
         2 => bouncing_balls_scene(),
@@ -416,7 +494,8 @@ fn main() {
         5 => earth_scene(),
         6 => simple_light_scene(),
         7 => cornell_box_scene(),
-        _ => cornell_box_smoke_scene(),
+        8 => cornell_box_smoke_scene(),
+        _ => the_next_week_scene(),
     };
 
     // ---- CAMERA SETUP ----
@@ -429,7 +508,8 @@ fn main() {
         5 => earth_camera(ASPECT_RATIO, &mut background),
         6 => simple_light_camera(ASPECT_RATIO, &mut background),
         7 => cornell_box_camera(ASPECT_RATIO, &mut background),
-        _ => cornell_box_smoke_camera(ASPECT_RATIO, &mut background),
+        8 => cornell_box_smoke_camera(ASPECT_RATIO, &mut background),
+        _ => the_next_week_camera(ASPECT_RATIO, &mut background),
     };
 
     // ---- RENDERING THE SCENE ----

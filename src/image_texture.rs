@@ -20,12 +20,12 @@ impl ImageTexture {
             Ok(i) => {
                 width = i.width();
                 height = i.height();
-                println!("LOADED IMAGE {width} {height}");
                 Some(i)
             },
             Err(_) => {
                 width = 0;
                 height = 0;
+                println!("FAILED TO LOAD IMAGE {path}");
                 None
             }
         };
