@@ -10,6 +10,9 @@ mod bvh_node;
 mod sphere;
 mod moving_sphere;
 mod aa_rect;
+mod aa_box;
+mod translate;
+mod rotate_y;
 mod material;
 mod lambertian;
 mod metal;
@@ -28,19 +31,20 @@ use ray_tracing::*;
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::camera::Camera;
-
 use crate::hittable::HittableTrait;
 use crate::hittable_list::HittableList;
 use crate::bvh_node::BVHNode;
 use crate::aabb::AABB;
 use crate::sphere::Sphere;
 use crate::moving_sphere::MovingSphere;
-
+use crate::aa_rect::{XYRect, XZRect, YZRect};
+use crate::aa_box::AABox;
+use crate::translate::Translate;
 use crate::material::MaterialTrait;
 use crate::lambertian::Lambertian;
 use crate::metal::Metal;
 use crate::dielectric::Dielectric;
-
+use crate::diffuse_light::DiffuseLight;
 use crate::texture::TextureTrait;
 use crate::solid_colour::SolidColour;
 use crate::checker_texture::CheckerTexture;
@@ -52,8 +56,7 @@ use std::sync::Arc;
 use rayon::prelude::*;
 use indicatif::{ ProgressBar, ProgressStyle };
 use image::{ ImageBuffer, Rgb };
-use crate::diffuse_light::DiffuseLight;
-use crate::aa_rect::XYRect;
+use crate::rotate_y::RotateY;
 
 /// Generates the final scene from 'Ray Tracing in a Weekend'
 fn in_a_weekend_scene() -> HittableList {
@@ -227,6 +230,47 @@ fn simple_light_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
     )
 }
 
+/// Generates Cornell Box scene
+fn cornell_box_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let red = Arc::new(Lambertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::from_colour(15., 15., 15.));
+
+    world.add(YZRect::new(0., 555., 0., 555., 555., Arc::clone(&green)));
+    world.add(YZRect::new(0., 555., 0., 555., 0., Arc::clone(&red)));
+    world.add(XZRect::new(213., 343., 227., 332., 554., Arc::clone(&light)));
+    world.add(XZRect::new(0., 555., 0., 555., 0., Arc::clone(&white)));
+    world.add(XZRect::new(0., 555., 0., 555., 555., Arc::clone(&white)));
+    world.add(XYRect::new(0., 555., 0., 555., 555., Arc::clone(&white)));
+
+    let box1 = Arc::new(AABox::new(Vec3::new(0., 0., 0.), Vec3::new(165., 330., 165.), Arc::clone(&white)));
+    let box1 = Arc::new(RotateY::new(Arc::clone(&box1), 15.));
+    world.add(Translate::new(Arc::clone(&box1), Vec3::new(265., 0., 295.)));
+
+    let box2 = Arc::new(AABox::new(Vec3::new(0., 0., 0.), Vec3::new(165., 165., 165.), Arc::clone(&white)));
+    let box2 = Arc::new(RotateY::new(Arc::clone(&box2), -18.));
+    world.add(Translate::new(Arc::clone(&box2), Vec3::new(130., 0., 65.)));
+
+    world
+}
+
+/// Generates the camera for the Cornell Box scene
+fn cornell_box_camera(aspect_ratio: f64, background: &mut Vec3) -> Camera {
+    let look_from = Vec3::new(278., 278., -800.);
+    let look_at = Vec3::new(278., 278., 0.);
+    let up = Vec3::new(0., 1., 0.);
+    let dist_to_focus = 10.;
+    let aperture = 0.0;
+    *background = Vec3::zero();
+
+    Camera::new(
+        look_from, look_at, up, 40., aperture, dist_to_focus, aspect_ratio, 2., 0., 0.
+    )
+}
+
 /// Current working scene
 fn working_scene() -> HittableList {
     // Creates world list
@@ -317,20 +361,21 @@ fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> 
 
 fn main() {
     // ---- IMAGE SETUP ----
-    const ASPECT_RATIO: f64 = 3./2.;
-    const IMAGE_WIDTH: usize = 400;
+    const ASPECT_RATIO: f64 = 1.;
+    const IMAGE_WIDTH: usize = 600;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 5;
+    const WORLD_TYPE: usize = 6;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
         2 => two_spheres_scene(),
         3 => two_perlin_spheres_scene(),
         4 => earth_scene(),
         5 => simple_light_scene(),
+        6 => cornell_box_scene(),
         _ => working_scene(),
     };
 
@@ -342,6 +387,7 @@ fn main() {
         3 => two_perlin_spheres_camera(ASPECT_RATIO, &mut background),
         4 => earth_camera(ASPECT_RATIO, &mut background),
         5 => simple_light_camera(ASPECT_RATIO, &mut background),
+        6 => cornell_box_camera(ASPECT_RATIO, &mut background),
         _ => working_camera(ASPECT_RATIO, &mut background),
     };
 
