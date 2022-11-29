@@ -24,7 +24,9 @@ impl HittableTrait for Translate {
         match self.object.hit(&moved_ray, t_min, t_max) {
             None => None,
             Some(mut rec) => {
-                let mut hit_record = HitRecord::new(rec.point + self.offset, &rec.material, rec.u, rec.v, rec.t);
+                let mut hit_record = HitRecord::new(
+                    rec.point + self.offset, &rec.material, rec.u, rec.v, rec.t
+                );
                 hit_record.calculate_face_normal(&moved_ray, rec.normal);
 
                 Some(hit_record)

@@ -54,11 +54,19 @@ impl RotateY {
         Hittable::RotateY(RotateY {object, cos_theta, sin_theta, bbox})
     }
 
-    fn rotate(&self, v: &Vec3) -> Vec3 {
+    fn rotate_ray_vec(&self, v: &Vec3) -> Vec3 {
         Vec3::new(
             self.cos_theta * v.x - self.sin_theta * v.z,
             v.y,
             self.sin_theta * v.x + self.cos_theta * v.z
+        )
+    }
+
+    fn rotate_record_vec(&self, v: &Vec3) -> Vec3 {
+        Vec3::new(
+            self.cos_theta * v.x + self.sin_theta * v.z,
+            v.y,
+            -self.sin_theta * v.x + self.cos_theta * v.z
         )
     }
 }
@@ -66,14 +74,16 @@ impl RotateY {
 impl HittableTrait for RotateY {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rotated_ray = Ray::new(
-            self.rotate(&ray.origin), self.rotate(&ray.direction), ray.time
+            self.rotate_ray_vec(&ray.origin), self.rotate_ray_vec(&ray.direction), ray.time
         );
 
         match self.object.hit(&rotated_ray, t_min, t_max) {
             None => None,
             Some(rec) => {
-                let mut hit_record = HitRecord::new(self.rotate(&rec.point), &rec.material, rec.u, rec.v, rec.t);
-                hit_record.calculate_face_normal(&rotated_ray, self.rotate(&rec.normal));
+                let mut hit_record = HitRecord::new(
+                    self.rotate_record_vec(&rec.point), &rec.material, rec.u, rec.v, rec.t
+                );
+                hit_record.calculate_face_normal(&rotated_ray, self.rotate_record_vec(&rec.normal));
 
                 Some(hit_record)
             }
