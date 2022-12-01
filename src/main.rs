@@ -481,7 +481,7 @@ fn main() {
     const ASPECT_RATIO: f64 = 1.;
     const IMAGE_WIDTH: usize = 800;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 10000;
+    const SAMPLES_PER_PIXEL: i32 = 20000;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
