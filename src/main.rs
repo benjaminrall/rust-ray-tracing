@@ -479,13 +479,13 @@ fn ray_colour(ray: &Ray, background: Vec3, world: &HittableList, depth: i32) -> 
 fn main() {
     // ---- IMAGE SETUP ----
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 1000;
+    const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: i32 = 16000;
+    const SAMPLES_PER_PIXEL: i32 = 500;
     const MAX_DEPTH: i32 = 50;
 
     // ---- WORLD SETUP ----
-    const WORLD_TYPE: usize = 0;
+    const WORLD_TYPE: usize = 7;
     let world = match WORLD_TYPE {
         1 => in_a_weekend_scene(),
         2 => bouncing_balls_scene(),
